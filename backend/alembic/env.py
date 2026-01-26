@@ -5,6 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.core.config import settings
+from app.db.base import Base
+import app.db.models  # noqa: F401
 
 
 # this is the Alembic Config object, which provides
@@ -20,8 +22,11 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+if not settings.DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
+
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

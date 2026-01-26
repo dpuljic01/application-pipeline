@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
@@ -11,7 +11,3 @@ def get_db():
         yield db
     finally:
         db.close()
-        
-def test_connection() -> None:
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
