@@ -4,9 +4,11 @@ from pydantic import BaseModel, Field
 
 from app.domain.enums import ActivityType
 
+
 class ActivityCreate(BaseModel):
     activity_type: ActivityType
     note: str | None = Field(default=None, max_length=5000)
+
 
 class ActivityRead(BaseModel):
     id: UUID

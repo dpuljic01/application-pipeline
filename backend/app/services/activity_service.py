@@ -33,9 +33,9 @@ class ActivityService:
             activity_type=activity_type,
             note=note,
         )
-         # ensure defaults (created_at) are assigned before using them
+        # ensure defaults (created_at) are assigned before using them
         self.db.flush()
-        
+
         # business rule: activity updates app timeline
         app.last_activity_at = activity.created_at
 

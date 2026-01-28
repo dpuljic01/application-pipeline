@@ -8,6 +8,7 @@ from app.db.base import Base
 from app.db.mixins import UUIDPrimaryKeyMixin, TimestampMixin
 from app.domain.enums import ApplicationStage
 
+
 class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "applications"
 
@@ -36,8 +37,9 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     activities = relationship(
         "Activity",
         back_populates="application",
-        cascade="all, delete-orphan", # propagate operations from parent, delete-orphan to remove unlinked activities
+        cascade="all, delete-orphan",  # propagate operations from parent, delete-orphan to remove unlinked activities
     )
+
 
 Index(
     "ix_applications_user_last_activity",

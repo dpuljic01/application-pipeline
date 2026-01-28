@@ -293,4 +293,259 @@ If yes → good design.
 
 ---
 
-End of cheat sheet.
+## 12. JWT, JWKS, and JOSE (Deep Dive – Day 4)
+
+### JOSE Standards (Foundation)
+
+**JOSE** = *JavaScript Object Signing and Encryption*  
+A family of standards that define how tokens are signed, verified, and represented.
+
+Relevant parts:
+
+- **JWT (JSON Web Token)** – token format (`header.payload.signature`)
+- **JWS (JSON Web Signature)** – how JWTs are signed (e.g. RS256)
+- **JWK (JSON Web Key)** – JSON representation of a cryptographic key
+- **JWKS (JSON Web Key Set)** – a set of public keys published by the issuer
+
+**Key idea:**  
+JWTs are verified using public keys defined by JOSE standards, not custom cryptography.
+
+---
+
+### Why JWKS Exists
+
+**Problem JWKS solves:**
+
+- Cognito signs tokens with **private keys**
+- Backend must verify tokens **without knowing private keys**
+- Keys must be **rotatable** without breaking clients
+
+**Solution:**
+
+- Cognito publishes **public keys** at a well-known JWKS endpoint
+- JWT header contains `kid` (key ID)
+- Backend selects the correct public key by `kid`
+
+**Result:**
+
+- No shared secrets
+- Stateless authentication
+- Safe key rotation
+
+---
+
+### JWKS Fetch + Cache Pattern (Critical)
+
+**Why caching is mandatory:**
+
+- Fetching JWKS on every request is slow and unnecessary
+- Keys change rarely
+- JWKS is public but still a network dependency
+
+**Correct strategy:**
+
+1. Fetch JWKS once
+2. Cache in memory with TTL
+3. Reuse for all requests
+4. Refresh only when:
+   - TTL expires, or
+   - token `kid` is not found (key rotation case)
+
+**Important mistake avoided:**
+
+- Never clear cache on every request
+- Refresh **only** on cache expiry or key-miss
+
+---
+
+### JWT Verification (Backend Responsibility)
+
+**Backend verification steps (non-negotiable):**
+
+1. Extract token from `Authorization: Bearer <JWT>`
+2. Read JWT header **without trusting payload**
+3. Select JWK by `kid`
+4. Verify cryptographic signature (RS256)
+5. Validate standard claims:
+   - `iss` – issuer (Cognito user pool)
+   - `aud` – audience (app client id)
+   - `exp` – expiration
+6. Extract trusted claims (`sub`, `email`, etc.)
+
+**Important principle:**
+
+> Decoding ≠ verification  
+> Verification must always include signature + claims.
+
+---
+
+### `iss` and `aud` (Why They Are Not in Models)
+
+- `iss` and `aud` are **security constraints**
+- They are validated at the boundary
+- They are **not application data**
+
+**Design rule:**
+
+- Validate → discard
+- Do not pass `iss` / `aud` into business logic
+- Keep them out of response models
+
+This prevents coupling API contracts to auth internals.
+
+---
+
+### `at_hash` and ID Tokens (Important Edge Case)
+
+**What happened:**
+
+- Cognito ID tokens may contain `at_hash`
+- `python-jose` tries to validate it
+- Backend only receives one token (ID token)
+- Access token is not available → verification fails
+
+**Correct resolution:**
+
+- Disable `at_hash` verification on backend
+- Rely on:
+  - signature
+  - `iss`
+  - `aud`
+  - `exp`
+
+**Why this is correct:**
+
+- `at_hash` is mainly for frontend / OIDC clients
+- Backends typically validate tokens independently
+
+---
+
+## 13. ID Token vs Access Token (Very Important)
+
+### ID Token
+
+**Purpose:**
+
+- Identity
+- Who the user is
+
+**Contains:**
+
+- `sub`
+- `email`
+- profile data
+
+**Used for:**
+
+- `/me`
+- user bootstrap
+- identity mapping
+
+---
+
+### Access Token
+
+**Purpose:**
+
+- Authorization
+- What the user is allowed to do
+
+**Used for:**
+
+- Protecting API endpoints
+- Scopes / groups / permissions
+
+---
+
+### Rule
+
+- `/me` → **ID token**
+- Business APIs → **access token**
+
+Do not mix them.
+
+---
+
+## 14. `/me` Endpoint – Correct Semantics
+
+**What `/me` represents:**
+
+> “Who is the currently authenticated user?”
+
+**Responsibilities:**
+
+- Verify authentication end-to-end
+- Prove JWT verification works
+- Return identity data only
+
+**What `/me` should return:**
+
+- `sub` (stable user identifier)
+- Optional identity fields (`email`, `username`)
+
+**What `/me` should NOT return:**
+
+- `token_use`
+- `iss`, `aud`
+- scopes, groups, or permissions
+- raw tokens
+
+**Reason:**
+
+- `/me` is an identity endpoint, not an auth-debug endpoint
+- Authentication mechanics stay server-side
+
+---
+
+## 15. OAuth2 Flow vs Backend Responsibilities
+
+**OAuth2 Authorization Code Flow:**
+
+1. Browser → Cognito `/oauth2/authorize`
+2. Cognito → Browser with `code`
+3. Client exchanges `code` → `/oauth2/token`
+4. Cognito returns:
+   - `id_token`
+   - `access_token`
+5. Client sends JWT to backend
+
+**Backend never sees:**
+
+- username / password
+- authorization `code`
+- refresh token
+
+**Backend only cares about:**
+
+- JWT verification
+- claim validation
+- identity extraction
+
+---
+
+## 16. Authentication Testing Strategy (Day 4)
+
+**Tests performed:**
+
+- Valid token → 200
+- Missing token → 401/403
+- Tampered token → 401
+- Wrong issuer → 401
+- Wrong audience → 401
+- Expired token → 401
+- JWKS fetched once and cached correctly
+
+**Outcome:**
+
+Authentication pipeline is correct, secure, and production-aligned.
+
+---
+
+## 17. Key Takeaways
+
+- Authentication is a **boundary concern**
+- JWTs must always be **verified**, never trusted
+- JWKS enables **stateless, scalable auth**
+- Cache correctness matters as much as cryptography
+- Identity and authorization are **separate concerns**
+- Clean boundaries beat clever abstractions

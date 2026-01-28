@@ -9,6 +9,7 @@ from app.db.mixins import UUIDPrimaryKeyMixin
 from app.domain.enums import ActivityType
 from app.db.mixins import utcnow
 
+
 class Activity(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "activities"
 
@@ -33,6 +34,7 @@ class Activity(UUIDPrimaryKeyMixin, Base):
     )
 
     application = relationship("Application", back_populates="activities")
+
 
 Index(
     "ix_activities_application_created_at",

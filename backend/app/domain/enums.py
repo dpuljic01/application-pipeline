@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ApplicationStage(str, Enum):
     SAVED = "SAVED"
     APPLIED = "APPLIED"
@@ -7,6 +8,7 @@ class ApplicationStage(str, Enum):
     OFFER = "OFFER"
     REJECTED = "REJECTED"
     WITHDRAWN = "WITHDRAWN"
+
 
 class ActivityType(str, Enum):
     NOTE = "NOTE"

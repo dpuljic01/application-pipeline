@@ -16,6 +16,8 @@ dependencies = [
     "sqlalchemy (>=2.0.46,<3.0.0)",
     "psycopg[binary] (>=3.3.2,<4.0.0)",
     "alembic (>=1.18.1,<2.0.0)",
+    "python-jose[cryptography] (>=3.5.0,<4.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
 ]
 
 
@@ -27,5 +29,6 @@ build-backend = "poetry.core.masonry.api"
 dev = [
     "pytest (>=9.0.2,<10.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "ruff (>=0.14.14,<0.15.0)"
+    "ruff (>=0.14.14,<0.15.0)",
+    "pre-commit (>=4.5.1,<5.0.0)"
 ]
