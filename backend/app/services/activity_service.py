@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
 
@@ -20,6 +21,7 @@ class ActivityService:
         application_id: UUID,
         activity_type: ActivityType,
         note: str | None = None,
+        occurred_at: datetime | None = None,
     ):
         app = self.application_repository.get_for_user(
             user_id=user_id,
@@ -32,10 +34,11 @@ class ActivityService:
             application_id=app.id,
             activity_type=activity_type,
             note=note,
+            occurred_at=occurred_at,
         )
-         # ensure defaults (created_at) are assigned before using them
+        # ensure defaults (created_at) are assigned before using them
         self.db.flush()
-        
+
         # business rule: activity updates app timeline
         app.last_activity_at = activity.created_at
 

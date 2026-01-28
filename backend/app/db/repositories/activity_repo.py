@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.db.models.activity import Activity
@@ -11,7 +13,7 @@ class ActivityRepository:
     def create(
         self,
         *,
-        application_id: str,
+        application_id: UUID,
         activity_type: ActivityType,
         note: str | None = None,
     ) -> Activity:

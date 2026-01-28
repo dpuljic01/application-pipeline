@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import String, DateTime, Enum, ForeignKey, Index
+from uuid import UUID as PyUUID
+from sqlalchemy import String, DateTime, Enum, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -8,10 +9,11 @@ from app.db.base import Base
 from app.db.mixins import UUIDPrimaryKeyMixin, TimestampMixin
 from app.domain.enums import ApplicationStage
 
+
 class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "applications"
 
-    user_id: Mapped[UUID] = mapped_column(
+    user_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -20,13 +22,14 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     company: Mapped[str] = mapped_column(String(200), nullable=False)
     role_title: Mapped[str] = mapped_column(String(128), nullable=False)
-    job_url: Mapped[str | None] = mapped_column(String(2000))
-    location: Mapped[str | None] = mapped_column(String(100))
-    salary_range: Mapped[str | None] = mapped_column(String(100))
+    job_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    location: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    salary_range: Mapped[str | None] = mapped_column(String(100), nullable=True)
     stage: Mapped[ApplicationStage] = mapped_column(
         Enum(ApplicationStage, name="application_stage"),
         nullable=False,
         default=ApplicationStage.SAVED,
+        server_default=text("'SAVED'"),
     )
 
     last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -36,16 +39,13 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     activities = relationship(
         "Activity",
         back_populates="application",
-        cascade="all, delete-orphan", # propagate operations from parent, delete-orphan to remove unlinked activities
+        cascade="all, delete-orphan",  # propagate operations from parent, delete-orphan to remove unlinked activities
     )
 
-Index(
-    "ix_applications_user_last_activity",
-    Application.user_id,
-    Application.last_activity_at.desc(),
-)
-Index(
-    "ix_applications_user_stage",
-    Application.user_id,
-    Application.stage,
-)
+    __table_args__ = (
+        Index("ix_applications_user_last_activity", "user_id", last_activity_at.desc()),
+        Index(
+            "ix_applications_user_updated_at", "user_id", "updated_at"
+        ),  # No need for DESC magic, postgres can perform backward scans on B-tree indexes, meaning ASC index supports both sort directions
+        Index("ix_applications_user_stage", "user_id", "stage"),
+    )

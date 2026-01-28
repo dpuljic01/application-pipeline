@@ -9,6 +9,7 @@ from app.db.mixins import UUIDPrimaryKeyMixin
 from app.domain.enums import ActivityType
 from app.db.mixins import utcnow
 
+
 class Activity(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "activities"
 
@@ -25,8 +26,13 @@ class Activity(UUIDPrimaryKeyMixin, Base):
     )
 
     note: Mapped[str | None] = mapped_column(Text)
-
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utcnow,
+    )
+    # DOMAIN: when the event happened (user can put historical date)
+    occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=utcnow,
@@ -34,8 +40,10 @@ class Activity(UUIDPrimaryKeyMixin, Base):
 
     application = relationship("Application", back_populates="activities")
 
-Index(
-    "ix_activities_application_created_at",
-    Activity.application_id,
-    Activity.created_at.desc(),
-)
+    __table_args__ = (
+        Index(
+            "ix_activities_application_occurred_at",
+            "application_id",
+            occurred_at.desc(),
+        ),
+    )

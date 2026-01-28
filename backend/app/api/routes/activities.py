@@ -25,6 +25,7 @@ def create_activity(
             application_id=application_id,
             activity_type=payload.activity_type,
             note=payload.note,
+            occurred_at=payload.occurred_at,
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")
