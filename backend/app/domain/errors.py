@@ -8,3 +8,7 @@ class NotFound(DomainError):
 
 class Forbidden(DomainError):
     pass
+
+
+class InvalidTransition(DomainError):
+    pass

@@ -13,6 +13,10 @@ class ApplicationCreate(BaseModel):
     salary_range: str | None = None
 
 
+class StageChangeRequest(BaseModel):
+    stage: ApplicationStage
+
+
 class ApplicationUpdate(BaseModel):
     company: str | None = Field(default=None, min_length=1, max_length=200)
     role_title: str | None = Field(default=None, min_length=1, max_length=128)

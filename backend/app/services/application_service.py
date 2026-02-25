@@ -2,8 +2,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.db.repositories.application_repo import ApplicationRepository
-from app.domain.enums import ApplicationStage
-from app.domain.errors import NotFound
+from app.domain.enums import ALLOWED_TRANSITIONS, ApplicationStage
+from app.domain.errors import InvalidTransition, NotFound
 from app.db.mixins import utcnow
 
 
@@ -70,10 +70,14 @@ class ApplicationService:
         if not app:
             raise NotFound("Application not found")
 
-        # business rule: track stage change time
-        if app.stage != stage:
-            app.stage = stage
-            app.stage_changed_at = utcnow()
+        if app.stage == stage:
+            return app
+
+        if stage not in ALLOWED_TRANSITIONS[app.stage]:
+            raise InvalidTransition(f"Cannot transition from {app.stage} to {stage}")
+
+        app.stage = stage
+        app.stage_changed_at = utcnow()
 
         self.db.commit()
         self.db.refresh(app)
