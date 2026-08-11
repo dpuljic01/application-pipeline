@@ -5,8 +5,10 @@ from app.api.deps import get_application_service, get_current_user_id
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
+    ApplicationUpdate,
     StageChangeRequest,
 )
+from app.db.models.application import Application
 from app.domain.errors import InvalidTransition, NotFound
 from app.services.application_service import ApplicationService
 
@@ -18,7 +20,7 @@ def create_application(
     payload: ApplicationCreate,
     user_id: UUID = Depends(get_current_user_id),
     service: ApplicationService = Depends(get_application_service),
-) -> ApplicationRead:
+) -> Application:
     application = service.create_application(
         user_id=user_id,
         company=payload.company,
@@ -35,7 +37,7 @@ def get_application(
     application_id: UUID,
     user_id: UUID = Depends(get_current_user_id),
     service: ApplicationService = Depends(get_application_service),
-) -> ApplicationRead:
+) -> Application:
     try:
         return service.get_application_for_user(
             user_id=user_id,
@@ -49,9 +51,26 @@ def get_application(
 def list_applications(
     user_id: UUID = Depends(get_current_user_id),
     service: ApplicationService = Depends(get_application_service),
-) -> list[ApplicationRead]:
+) -> list[Application]:
     applications = service.list_applications_for_user(user_id=user_id)
     return applications
+
+
+@router.put("/{application_id}", response_model=ApplicationRead)
+def update_application(
+    application_id: UUID,
+    payload: ApplicationUpdate,
+    user_id: UUID = Depends(get_current_user_id),
+    service: ApplicationService = Depends(get_application_service),
+) -> Application:
+    try:
+        return service.update_application(
+            user_id=user_id,
+            application_id=application_id,
+            payload=payload,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
 
 
 @router.patch("/{application_id}/stage", response_model=ApplicationRead)
@@ -60,7 +79,7 @@ def change_stage(
     payload: StageChangeRequest,
     user_id: UUID = Depends(get_current_user_id),
     service: ApplicationService = Depends(get_application_service),
-) -> ApplicationRead:
+) -> Application:
     try:
         application = service.change_stage(
             user_id=user_id,
@@ -71,4 +90,4 @@ def change_stage(
     except NotFound:
         raise HTTPException(status_code=404, detail="Not found")
     except InvalidTransition as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e))

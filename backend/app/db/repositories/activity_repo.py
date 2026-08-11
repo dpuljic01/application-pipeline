@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -16,11 +17,13 @@ class ActivityRepository:
         application_id: UUID,
         activity_type: ActivityType,
         note: str | None = None,
+        occurred_at: datetime | None = None,
     ) -> Activity:
         activity = Activity(
             application_id=application_id,
             activity_type=activity_type,
             note=note,
+            occurred_at=occurred_at,
         )
         self.db.add(activity)
         return activity

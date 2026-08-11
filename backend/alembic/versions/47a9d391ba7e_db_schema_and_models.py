@@ -30,6 +30,8 @@ def upgrade() -> None:
         "OFFER",
         "REJECTED",
         "WITHDRAWN",
+        "ACCEPTED",
+        "GHOSTED",
         name="application_stage",
         create_type=False,
     )
@@ -40,6 +42,9 @@ def upgrade() -> None:
         "INTERVIEW",
         "OFFER",
         "REJECTION",
+        "ACCEPTED",
+        "GHOSTED",
+        "STAGE_CHANGE",
         name="activity_type",
         create_type=False,
     )

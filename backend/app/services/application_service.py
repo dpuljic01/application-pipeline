@@ -1,16 +1,18 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
 
+from app.api.schemas.application import ApplicationUpdate
+from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
-from app.domain.enums import ALLOWED_TRANSITIONS, ApplicationStage
+from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
 from app.domain.errors import InvalidTransition, NotFound
-from app.db.mixins import utcnow
 
 
 class ApplicationService:
     def __init__(self, db: Session):
         self.db = db
         self.repository = ApplicationRepository(db)
+        self.activity_repository = ActivityRepository(db)
 
     def get_application_for_user(
         self,
@@ -56,6 +58,28 @@ class ApplicationService:
         self.db.refresh(app)
         return app
 
+    def update_application(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+        payload: ApplicationUpdate,
+    ):
+        app = self.repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            raise NotFound("Application not found")
+
+        self.repository.update(
+            application=app,
+            data=payload.model_dump(exclude_unset=True),
+        )
+        self.db.commit()
+        self.db.refresh(app)
+        return app
+
     def change_stage(
         self,
         *,
@@ -76,8 +100,19 @@ class ApplicationService:
         if stage not in ALLOWED_TRANSITIONS[app.stage]:
             raise InvalidTransition(f"Cannot transition from {app.stage} to {stage}")
 
-        app.stage = stage
-        app.stage_changed_at = utcnow()
+        from_stage = app.stage
+
+        self.repository.update_stage(
+            application=app,
+            stage=stage,
+        )
+        activity = self.activity_repository.create(
+            application_id=app.id,
+            activity_type=ActivityType.STAGE_CHANGE,
+            note=f"{from_stage.value} -> {stage.value}",
+        )
+        self.db.flush()
+        app.last_activity_at = activity.created_at
 
         self.db.commit()
         self.db.refresh(app)

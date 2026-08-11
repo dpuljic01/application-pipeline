@@ -1,6 +1,6 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.enums import ActivityType
 
@@ -12,6 +12,8 @@ class ActivityCreate(BaseModel):
 
 
 class ActivityRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     application_id: UUID
     activity_type: ActivityType

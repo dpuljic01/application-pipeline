@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.db.models.application import Application
 from app.domain.enums import ApplicationStage
+from app.db.mixins import utcnow
 
 
 class ApplicationRepository:
@@ -46,6 +47,10 @@ class ApplicationRepository:
         self.db.add(app)
         return app
 
+    def update(self, *, application: Application, data: dict) -> None:
+        for field, value in data.items():
+            setattr(application, field, value)
+
     def update_stage(
         self,
         *,
@@ -53,3 +58,4 @@ class ApplicationRepository:
         stage: ApplicationStage,
     ) -> None:
         application.stage = stage
+        application.stage_changed_at = utcnow()

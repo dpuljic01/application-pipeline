@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import get_activity_service, get_current_user_id
 from app.api.schemas.activity import ActivityCreate, ActivityRead
+from app.db.models.activity import Activity
 from app.domain.errors import NotFound
 from app.services.activity_service import ActivityService
 
@@ -18,7 +19,7 @@ def create_activity(
     payload: ActivityCreate,
     user_id: UUID = Depends(get_current_user_id),
     service: ActivityService = Depends(get_activity_service),
-):
+) -> Activity:
     try:
         return service.log_activity(
             user_id=user_id,
