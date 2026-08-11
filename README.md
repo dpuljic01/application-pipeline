@@ -113,12 +113,68 @@ Backend **never** trusts frontend claims.
 
 ## Getting Started (Local)
 
+### Prerequisites
+
+* Docker Desktop (runs Postgres)
+* Python 3.11+
+* [Poetry](https://python-poetry.org/) for dependency management
+
 ### Backend
 
 ```bash
 cd backend
+
+# 1. Start Postgres
 docker compose up -d
+
+# 2. Configure environment
+cp .env.example .env
+# then fill in COGNITO_REGION / COGNITO_USER_POOL_ID / COGNITO_APP_CLIENT_ID
+
+# 3. Install dependencies
+poetry install
+
+# 4. Run database migrations
+poetry run alembic upgrade head
+
+# 5. Start the API
+poetry run uvicorn app.main:app --reload
 ```
+
+The API is now running at `http://localhost:8000` (interactive docs at `/docs`). Confirm it's talking to Postgres:
+
+```bash
+curl http://localhost:8000/api/health
+# {"status": "ok", "db": true}
+```
+
+### Running Tests
+
+```bash
+cd backend
+poetry run pytest
+```
+
+Tests run against the same local Postgres instance — each test runs inside a transaction that's rolled back at teardown, so nothing persists and no separate test database is needed. Full suite runs in well under a second.
+
+### Lint & Format
+
+```bash
+cd backend
+poetry run ruff check . --fix
+poetry run ruff format .
+```
+
+A pre-commit hook runs both automatically on every commit. Enable it once per clone with `poetry run pre-commit install` (from `backend/`).
+
+### CI
+
+Every push and pull request runs `.github/workflows/ci.yml`: lint, format check, migrations, and the full test suite against a real `postgres:16` service container.
+
+### Troubleshooting
+
+* **`docker compose up -d` runs but the app seems to hit a different/empty database, or migrations behave unexpectedly**: something else may already be bound to port 5432 (a native Postgres install, another project's container). Check with `lsof -iTCP:5432 -sTCP:LISTEN` — if a non-Docker `postgres` process shows up, stop it before starting this project's container so you're not silently talking to the wrong database.
+* **`alembic upgrade head` fails with a role/database "does not exist" error**: the Docker volume may have been initialized under different Postgres credentials than what's currently in `docker-compose.yml`/`.env` (Postgres only applies `POSTGRES_USER`/`POSTGRES_DB` env vars the *first* time a volume is initialized). Either match `.env` to what the volume actually has, or remove the `db_data` volume to reinitialize from scratch (this deletes local dev data).
 
 ### Frontend (planned)
 

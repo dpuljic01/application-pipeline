@@ -549,3 +549,49 @@ Authentication pipeline is correct, secure, and production-aligned.
 - Cache correctness matters as much as cryptography
 - Identity and authorization are **separate concerns**
 - Clean boundaries beat clever abstractions
+
+---
+
+## 18. Transaction Boundaries: Why Stage Changes Write History Atomically (Day 3 addendum)
+
+**The gap:** `PATCH /applications/{id}/stage` validated the transition and updated `stage`/`stage_changed_at`, but never wrote an `Activity` record. History (`ActivityService.log_activity`) was a fully separate, manually-triggered path — so an automated stage change and the audit trail could silently drift apart.
+
+**The decision:** `ApplicationService.change_stage()` now does both writes — `ApplicationRepository.update_stage()` and `ActivityRepository.create(activity_type=STAGE_CHANGE, ...)` — through the **same session**, inside the **same `db.commit()`**.
+
+```python
+self.repository.update_stage(application=app, stage=stage)
+activity = self.activity_repository.create(
+    application_id=app.id,
+    activity_type=ActivityType.STAGE_CHANGE,
+    note=f"{from_stage.value} -> {stage.value}",
+)
+self.db.flush()
+app.last_activity_at = activity.created_at
+
+self.db.commit()   # single commit — both writes succeed or neither does
+self.db.refresh(app)
+```
+
+**Why this matters (the rule, not just this case):**
+
+- Two related writes that must both happen or neither happen belong in **one transaction**, not two service calls each with their own commit.
+- This is exactly why `CLAUDE.md` restricts `db.commit()`/`db.refresh()` to the **service layer only** — repositories never commit, so services stay free to compose multiple repository calls into one atomic unit of work.
+- The alternative (calling `ActivityService.log_activity()` separately, with its own commit) would create a window where a stage change could succeed and the history write could fail independently — silent data drift, hard to debug later.
+
+**Interview framing:** *"What happens if the second write fails?"* — with one shared session and one commit, it doesn't matter: nothing is persisted until both writes are staged, so a failure mid-way rolls back the whole operation. That's the same reasoning behind `db.flush()` before `db.commit()` here — flush assigns `activity.created_at` (a Python-side default) without ending the transaction, so `last_activity_at` can be set from a value that's guaranteed consistent with what's about to be committed.
+
+---
+
+## 19. Testing Strategy: Transactional Rollback per Test (Day 5)
+
+**Decision:** Tests don't get a dedicated test database or `drop_all`/`create_all` between runs. Each test opens one DB connection, starts an outer transaction, and runs inside a SAVEPOINT that's automatically restarted every time application code calls `db.commit()`. At teardown, the **outer transaction is rolled back**, so nothing a test does is ever actually persisted — regardless of how many `commit()` calls happened inside it.
+
+**Why not just point tests at a throwaway database?** Would work too, but this pattern:
+
+- Makes every test isolated **and free of setup/teardown cost** (no schema recreation, no per-test data wipe) — the full 22-test suite runs in ~0.2s.
+- Lets service-layer code call `db.commit()` exactly as it does in production, so the tests exercise the real transaction boundaries instead of a mocked-out session.
+- Works identically against local dev data — tests can run against the same Postgres a developer is using interactively without any risk of leaving rows behind.
+
+**The FastAPI wiring:** the `client` fixture overrides both `get_db` (yields the test's transactional session, not a fresh one per request) and `get_current_user_id` (returns a fixture-created user), via `app.dependency_overrides`. That's the same DI seam described in §3 — tests replace the *outer* dependency, not the service/repository code underneath it.
+
+**Gotcha hit while wiring this up:** `docker compose up -d` can silently not be "the database" if another Postgres is already bound to `localhost:5432` (a native Homebrew service, in this case) — the app connects fine either way if credentials happen to match, so nothing errors, it's just quietly running against the wrong Postgres. Worth checking `lsof -iTCP:5432 -sTCP:LISTEN` if DB behavior ever looks inconsistent with what `docker-compose.yml` describes.
