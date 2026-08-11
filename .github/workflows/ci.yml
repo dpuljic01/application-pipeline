@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app_pipeline_user
+          POSTGRES_PASSWORD: app_pipeline_password
+          POSTGRES_DB: app_pipeline_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app_pipeline_user"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://app_pipeline_user:app_pipeline_password@localhost:5432/app_pipeline_db
+      COGNITO_REGION: eu-central-1
+      COGNITO_USER_POOL_ID: placeholder
+      COGNITO_APP_CLIENT_ID: placeholder
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Lint (ruff check)
+        run: poetry run ruff check .
+
+      - name: Format check (ruff format)
+        run: poetry run ruff format --check .
+
+      - name: Run migrations
+        run: poetry run alembic upgrade head
+
+      - name: Run tests
+        run: poetry run pytest -v
