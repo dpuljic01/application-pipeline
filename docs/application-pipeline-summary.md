@@ -23,8 +23,8 @@ Quick-reference notes summarizing the **key backend, AWS, and architecture conce
 * `services/` – business logic
 * `domain/` – core models + rules
 * `db/` – persistence (SQLAlchemy)
-* `integrations/` – AWS / external services
 * `core/` – shared utilities, config
+* `integrations/` *(planned, Day 14+)* – AWS / external services (LLM providers, SES, S3)
 
 ---
 
@@ -39,13 +39,15 @@ Quick-reference notes summarizing the **key backend, AWS, and architecture conce
 * Calls services
 * Returns HTTP responses
 
+* Catches domain exceptions and maps them to HTTP status codes — `NotFound` → 404, `InvalidTransition` → 409 (a conflict with existing state, not a malformed request, so not 400)
+
 **What it must NOT do:**
 
 * No business logic
 * No database queries
 * No AWS SDK calls
 
-Think: *"Translate HTTP → Python"*
+Think: *"Translate HTTP → Python — including turning domain failures into deliberate, typed responses."*
 
 ---
 
@@ -56,6 +58,7 @@ Think: *"Translate HTTP → Python"*
 * Business rules
 * Orchestration
 * Coordinates repositories + integrations
+* Owns the transaction boundary — the only layer that calls `db.commit()` / `db.refresh()`
 
 **Examples:**
 
@@ -67,8 +70,9 @@ Think: *"Translate HTTP → Python"*
 
 * No HTTP knowledge
 * No SQLAlchemy session handling
+* No relying on a repository to commit for it
 
-Think: *"This is the brain"*
+Think: *"This is the brain — and the only place a transaction ends."*
 
 ---
 
@@ -78,19 +82,22 @@ Think: *"This is the brain"*
 
 * Pure business concepts
 * Enums, value objects, rules
+* Explicit state machine: `ALLOWED_TRANSITIONS` — a `dict[ApplicationStage, set[ApplicationStage]]` defining which stage changes are legal
+* Custom exception classes for business-rule violations (`NotFound`, `InvalidTransition`)
 
 **Examples:**
 
-* `ApplicationStatus`
-* Validation rules
+* `ApplicationStatus` — `SAVED → APPLIED → INTERVIEW → OFFER → ACCEPTED`, plus terminal states (`REJECTED`, `WITHDRAWN`, `GHOSTED`)
+* `SAVED` can only transition to `APPLIED` or `WITHDRAWN` — going straight to `INTERVIEW` is invalid and raises `InvalidTransition`
 
 **Rules:**
 
 * No FastAPI
 * No SQLAlchemy
 * No AWS
+* Testable as pure functions — no DB, no HTTP, just Python
 
-Think: *"Business truth, framework-free"*
+Think: *"Business truth, framework-free — including what counts as a violation."*
 
 ---
 
