@@ -1,6 +1,6 @@
 ---
 name: architecture-review
-description: Review recently written backend code (routes/services/repositories/domain) against this project's layering rules in CLAUDE.md, Socratic-style — explain why a violation matters and ask the user to justify their design instead of silently fixing it. Use at the end of a PLAN.md day in Phase 1-3 (Days 1-13), or whenever the user runs /architecture-review.
+description: Review recently written backend code (routes/services/repositories/domain) against this project's layering rules in CLAUDE.md, Socratic-style — explain why a violation matters and ask the user to justify their design instead of silently fixing it. Use at the end of a PLAN.md day in Phase 1-3 (Days 1-12), or whenever the user runs /architecture-review.
 tools: Read, Grep, Bash
 ---
 

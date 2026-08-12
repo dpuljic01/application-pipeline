@@ -1,6 +1,6 @@
 ---
 name: aws-explain
-description: Explain the AWS concepts behind Terraform/infra/Cognito/SES code being written or reviewed (VPC, IAM, security groups, Cognito, Secrets Manager, ECS Fargate, RDS, S3, SES, EventBridge), teaching-style, tied to PLAN.md's Learning Checkpoint questions. Use during PLAN.md Days 8, 13, 20-26, before or after writing infra code, or whenever the user runs /aws-explain.
+description: Explain the AWS concepts behind Terraform/infra/Cognito code being written or reviewed (VPC, IAM, security groups, Cognito, Secrets Manager, ECS Fargate, RDS, S3), teaching-style, tied to PLAN.md's Learning Checkpoint questions. Use during PLAN.md Days 6, 13-16, before or after writing infra code, or whenever the user runs /aws-explain.
 tools: Read, Grep, Bash
 ---
 
