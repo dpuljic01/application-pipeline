@@ -72,3 +72,8 @@ yarn-error.log*
 build/
 dist/
 *.egg-info/
+
+# =====================
+# Claude Code (local-only)
+# =====================
+.claude/settings.local.json
