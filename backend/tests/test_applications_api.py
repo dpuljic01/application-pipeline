@@ -1,6 +1,6 @@
 import uuid
 
-from app.api.deps import get_current_user_id
+from app.core.security.deps import CurrentUser, get_current_user
 from app.domain.enums import ApplicationStage
 
 
@@ -107,7 +107,11 @@ def test_user_cannot_see_another_users_application(client):
 
     # client fixture tears down dependency_overrides after the test, so it's
     # safe to swap the current-user override for the rest of this test only.
-    client.app.dependency_overrides[get_current_user_id] = lambda: uuid.uuid4()
+    client.app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        user_id=uuid.uuid4(),
+        cognito_sub=uuid.uuid4(),
+        email=None,
+    )
 
     response = client.get(f"/api/applications/{created['id']}")
     assert response.status_code == 404

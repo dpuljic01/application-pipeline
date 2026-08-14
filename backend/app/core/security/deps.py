@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 from fastapi import Depends, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pytest import Session
+from sqlalchemy.orm import Session
 
 from app.core.security.cognito_jwt import TokenPayload, verify_jwt
 from app.db.repositories.user_repo import UserRepository
@@ -46,7 +46,7 @@ async def require_access_token_payload(
 # Step 3: map Cognito sub -> internal user_id (DB lookup/upsert)
 async def get_current_user(
     db: Session = Depends(get_db),
-    payload: TokenPayload = Depends(require_access_token_payload),
+    payload: TokenPayload = Depends(require_id_token_payload),
 ) -> CurrentUser:
     """
     AWS Cognito: 'sub' is immutable subject identifier.

@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.orm import sessionmaker
 
-from app.api.deps import get_current_user_id
+from app.core.security.deps import CurrentUser, get_current_user
 from app.db.base import Base
 from app.db.models import User
 from app.db.session import engine, get_db
@@ -62,7 +62,11 @@ def test_user(db_session):
 @pytest.fixture()
 def client(db_session, test_user):
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user_id] = lambda: test_user.id
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        user_id=test_user.id,
+        cognito_sub=test_user.cognito_sub,
+        email=test_user.email,
+    )
 
     with TestClient(app) as test_client:
         yield test_client

@@ -1,13 +1,14 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_application_service, get_current_user_id
+from app.api.deps import get_application_service
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
     ApplicationUpdate,
     StageChangeRequest,
 )
+from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
 from app.domain.errors import InvalidTransition, NotFound
 from app.services.application_service import ApplicationService
@@ -16,13 +17,13 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 
 @router.post("", response_model=ApplicationRead)
-def create_application(
+async def create_application(
     payload: ApplicationCreate,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
     application = service.create_application(
-        user_id=user_id,
+        user_id=current_user.user_id,
         company=payload.company,
         role_title=payload.role_title,
         job_url=str(payload.job_url) if payload.job_url else None,
@@ -33,14 +34,14 @@ def create_application(
 
 
 @router.get("/{application_id}", response_model=ApplicationRead)
-def get_application(
+async def get_application(
     application_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
     try:
         return service.get_application_for_user(
-            user_id=user_id,
+            user_id=current_user.user_id,
             application_id=application_id,
         )
     except NotFound:
@@ -48,24 +49,24 @@ def get_application(
 
 
 @router.get("", response_model=list[ApplicationRead])
-def list_applications(
-    user_id: UUID = Depends(get_current_user_id),
+async def list_applications(
+    current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> list[Application]:
-    applications = service.list_applications_for_user(user_id=user_id)
+    applications = service.list_applications_for_user(user_id=current_user.user_id)
     return applications
 
 
 @router.put("/{application_id}", response_model=ApplicationRead)
-def update_application(
+async def update_application(
     application_id: UUID,
     payload: ApplicationUpdate,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
     try:
         return service.update_application(
-            user_id=user_id,
+            user_id=current_user.user_id,
             application_id=application_id,
             payload=payload,
         )
@@ -74,15 +75,15 @@ def update_application(
 
 
 @router.patch("/{application_id}/stage", response_model=ApplicationRead)
-def change_stage(
+async def change_stage(
     application_id: UUID,
     payload: StageChangeRequest,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
     try:
         application = service.change_stage(
-            user_id=user_id,
+            user_id=current_user.user_id,
             application_id=application_id,
             stage=payload.stage,
         )

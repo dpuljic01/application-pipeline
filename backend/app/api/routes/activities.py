@@ -1,8 +1,9 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_activity_service, get_current_user_id
+from app.api.deps import get_activity_service
 from app.api.schemas.activity import ActivityCreate, ActivityRead
+from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.activity import Activity
 from app.domain.errors import NotFound
 from app.services.activity_service import ActivityService
@@ -14,15 +15,15 @@ router = APIRouter(
 
 
 @router.post("", response_model=ActivityRead, status_code=201)
-def create_activity(
+async def create_activity(
     application_id: UUID,
     payload: ActivityCreate,
-    user_id: UUID = Depends(get_current_user_id),
+    current_user: CurrentUser = Depends(get_current_user),
     service: ActivityService = Depends(get_activity_service),
 ) -> Activity:
     try:
         return service.log_activity(
-            user_id=user_id,
+            user_id=current_user.user_id,
             application_id=application_id,
             activity_type=payload.activity_type,
             note=payload.note,
