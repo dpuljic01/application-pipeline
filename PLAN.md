@@ -346,6 +346,8 @@ Never expose ORM models directly in the API. `ApplicationRead` uses `model_confi
 
 ## Phase 4: AWS Deployment (Days 13–16)
 
+> **Cost management:** the NAT Gateway (~$32-35/mo) and ALB (~$16-20/mo) are the real cost risks here, not CloudWatch (basic Logs usage stays in the Always Free tier). Treat the stack as demo-on-demand: `terraform apply` before a review/interview/demo, `terraform destroy` right after, rather than leaving it running 24/7. This is also a legitimate interview answer, not just a cost hack — it shows deliberate cost control during dev.
+
 ### Day 13 — Terraform Foundations: VPC + RDS + Secrets Manager
 
 **Goal:** Network layer and managed database, as code.
@@ -427,7 +429,7 @@ Never expose ORM models directly in the API. `ApplicationRead` uses `model_confi
 - PR checks show green/red status.
 - Logs are structured JSON, searchable in CloudWatch by request_id.
 
-**Stretch:** The full original Day 26 monitoring buildout — `/metrics` endpoint, CloudWatch alarms, dashboard — if time allows.
+**Stretch:** Skip CloudWatch alarms/dashboards (extra cost, AWS-only signal) in favor of Prometheus/Grafana — add a `/metrics` endpoint via `prometheus_client`, then run Prometheus + Grafana locally via `docker-compose` for screenshots/demo. Zero AWS cost, and provider-agnostic monitoring is a more common JD keyword than CloudWatch dashboards specifically.
 
 **Learning Checkpoint:** Why a dedicated deploy IAM user instead of your personal credentials? Why is request_id correlation important?
 
