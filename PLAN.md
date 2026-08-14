@@ -33,7 +33,7 @@ Work linearly. Each day builds on the previous one. If a day takes longer than 3
 - ✅ Day 5 — Testing Foundation (pytest + CI landed early); filtering/sorting/pagination still open
 - ✅ Day 6 — Cognito Setup + JWT Verification (JWKS cache, `/me` endpoint, `core/security/`)
 - ⬜ Day 4 — Company Model + Relationships (next up)
-- ⬜ Day 7 — Auth wiring gap: `get_current_user_id()` is still a hardcoded stub; real routes aren't protected yet
+- 🟨 Day 7 — Route protection done (`get_current_user_id()` stub replaced with real `get_current_user`, verified against live Cognito); still open: global exception handler with consistent JSON error shape, JWKS-unreachable → 503
 
 ---
 
@@ -202,18 +202,18 @@ Never expose ORM models directly in the API. `ApplicationRead` uses `model_confi
 
 ---
 
-### Day 7 — Internal User Model + Route Protection + Essential Error Handling
+### Day 7 — Internal User Model + Route Protection + Essential Error Handling 🟨
 
 **Goal:** Map Cognito users to internal user records, scope all data per user, and stop leaking raw exceptions.
 
 **Context:** External identity providers give you authentication; your app needs its own user table for authorization and relationships. This day also closes the current gap: `get_current_user_id()` is a hardcoded stub — real routes need real auth.
 
 **Tasks:**
-1. `User` model: `id`, `cognito_sub` (unique), `email`, `created_at`. *(Already exists.)*
-2. Replace the `get_current_user_id()` stub with `get_current_user` from `core/security/deps.py` on every application/company/activity route — this dependency verifies the JWT, then looks up or creates (`get_or_create`) the internal user by `cognito_sub`.
-3. Confirm all repositories already filter by `user_id` (they do) — a user can never see another user's data, even by guessing UUIDs.
-4. Global exception handler: map `NotFound` → 404, `Forbidden` → 403, `InvalidTransition` → 409, with a consistent JSON error shape. No stack traces or internal paths in responses.
-5. Handle the obvious Cognito edge case: JWKS endpoint unreachable → 503, not 500.
+1. ✅ `User` model: `id`, `cognito_sub` (unique), `email`, `created_at`. *(Already exists.)*
+2. ✅ Replace the `get_current_user_id()` stub with `get_current_user` from `core/security/deps.py` on every application/company/activity route — this dependency verifies the JWT, then looks up or creates (`get_or_create`) the internal user by `cognito_sub`. *(Done 2026-08-14, verified manually against live Cognito.)*
+3. ✅ Confirm all repositories already filter by `user_id` (they do) — a user can never see another user's data, even by guessing UUIDs.
+4. ⬜ Global exception handler: map `NotFound` → 404, `Forbidden` → 403, `InvalidTransition` → 409, with a consistent JSON error shape. No stack traces or internal paths in responses. *(Currently done per-route via try/except in each route function, not a global FastAPI exception handler.)*
+5. ⬜ Handle the obvious Cognito edge case: JWKS endpoint unreachable → 503, not 500. *(`cognito_jwt.py` still raises a plain 500 on JWKS fetch failure.)*
 
 **Acceptance Criteria:**
 - First login auto-creates the internal user record.
