@@ -79,7 +79,7 @@ export default function DashboardPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div>
-            <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+            <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
               Application Pipeline
             </p>
             {email && <p className="mt-0.5 text-xs text-muted-foreground">{email}</p>}

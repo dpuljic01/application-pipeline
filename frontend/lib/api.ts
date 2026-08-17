@@ -1,4 +1,9 @@
-import type { Application, ApplicationCreateInput, ApplicationStage } from "@/lib/types";
+import type {
+  Application,
+  ApplicationCreateInput,
+  ApplicationStage,
+  ApplicationUpdateInput,
+} from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
@@ -47,6 +52,17 @@ export function createApplication(
 ): Promise<Application> {
   return request<Application>("/applications", token, {
     method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateApplication(
+  token: string,
+  applicationId: string,
+  input: ApplicationUpdateInput,
+): Promise<Application> {
+  return request<Application>(`/applications/${applicationId}`, token, {
+    method: "PUT",
     body: JSON.stringify(input),
   });
 }

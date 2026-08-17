@@ -47,3 +47,12 @@ export interface ApplicationCreateInput {
   location?: string | null;
   salary_range?: string | null;
 }
+
+export interface ApplicationUpdateInput {
+  company?: string;
+  role_title?: string;
+  job_url?: string | null;
+  location?: string | null;
+  salary_range?: string | null;
+  stage_changed_at?: string | null;
+}

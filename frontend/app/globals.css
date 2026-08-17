@@ -51,37 +51,37 @@
 :root {
   /* Control-room palette: ink charcoal ground, signal amber for active/primary,
      sage green reserved for the one true win state, muted slate for pipeline exits. */
-  --background: #101215;
+  --background: #17191d;
   --foreground: #ecede8;
-  --card: #17191d;
+  --card: #1f2126;
   --card-foreground: #ecede8;
-  --popover: #17191d;
+  --popover: #1f2126;
   --popover-foreground: #ecede8;
   --primary: #e8a33d;
   --primary-foreground: #14110a;
-  --secondary: #1e2126;
+  --secondary: #262930;
   --secondary-foreground: #ecede8;
-  --muted: #1b1d21;
-  --muted-foreground: #8b8f94;
-  --accent: #1e2126;
+  --muted: #23262c;
+  --muted-foreground: #989ca2;
+  --accent: #262930;
   --accent-foreground: #ecede8;
   --destructive: #c96a56;
-  --border: #26292e;
-  --input: #23262b;
+  --border: #2f333a;
+  --input: #2a2d34;
   --ring: #e8a33d;
   --chart-1: #e8a33d;
   --chart-2: #6fae7c;
-  --chart-3: #8b8f94;
+  --chart-3: #989ca2;
   --chart-4: #c96a56;
   --chart-5: #3a3d42;
   --radius: 0.5rem;
-  --sidebar: #17191d;
+  --sidebar: #1f2126;
   --sidebar-foreground: #ecede8;
   --sidebar-primary: #e8a33d;
   --sidebar-primary-foreground: #14110a;
-  --sidebar-accent: #1e2126;
+  --sidebar-accent: #262930;
   --sidebar-accent-foreground: #ecede8;
-  --sidebar-border: #26292e;
+  --sidebar-border: #2f333a;
   --sidebar-ring: #e8a33d;
 
   /* Stage-pipeline semantic tokens, not part of shadcn's base set */

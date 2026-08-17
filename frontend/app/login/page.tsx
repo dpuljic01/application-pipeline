@@ -33,7 +33,7 @@ export default function LoginPage() {
     <div className="grid-texture flex min-h-screen flex-1 items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
             Application Pipeline
           </p>
           <div className="mx-auto mt-3 h-px w-10 bg-border" />

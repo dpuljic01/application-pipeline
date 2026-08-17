@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { StageBadge } from "@/components/stage-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
+import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import type { Application } from "@/lib/types";
 
 function formatDate(iso: string): string {
@@ -86,14 +87,21 @@ export function ApplicationsTable({
                 {application.location ?? "—"}
               </TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
-                {formatDate(application.created_at)}
+                {formatDate(application.stage_changed_at ?? application.created_at)}
               </TableCell>
               <TableCell className="text-right">
-                <StageChangeMenu
-                  application={application}
-                  onChanged={onChanged}
-                  onUnauthorized={onUnauthorized}
-                />
+                <div className="flex justify-end gap-2">
+                  <EditApplicationDialog
+                    application={application}
+                    onUpdated={onChanged}
+                    onUnauthorized={onUnauthorized}
+                  />
+                  <StageChangeMenu
+                    application={application}
+                    onChanged={onChanged}
+                    onUnauthorized={onUnauthorized}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

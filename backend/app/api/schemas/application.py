@@ -23,6 +23,7 @@ class ApplicationUpdate(BaseModel):
     job_url: AnyHttpUrl | None = None
     location: str | None = None
     salary_range: str | None = None
+    stage_changed_at: datetime | None = None
 
 
 class ApplicationRead(BaseModel):
