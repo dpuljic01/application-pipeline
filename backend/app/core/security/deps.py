@@ -5,8 +5,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.security.cognito_jwt import TokenPayload, verify_jwt
-from app.db.repositories.user_repo import UserRepository
 from app.db.session import get_db
+from app.services.user_service import UserService
 
 bearer = HTTPBearer()
 
@@ -57,9 +57,9 @@ async def get_current_user(
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid sub claim in token")
 
-    repo = UserRepository(db)
-    user = repo.get_or_create(cognito_sub=cognito_sub, email=payload.email)
+    service = UserService(db)
+    user = service.get_or_create_current_user(
+        cognito_sub=cognito_sub, email=payload.email
+    )
 
-    # If UUID PK is DB-generated, flush is required to access user.id
-    db.flush()
     return CurrentUser(user_id=user.id, cognito_sub=cognito_sub, email=user.email)
