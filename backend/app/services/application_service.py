@@ -72,9 +72,13 @@ class ApplicationService:
         if not app:
             raise NotFound("Application not found")
 
+        data = payload.model_dump(exclude_unset=True)
+        if data.get("job_url") is not None:
+            data["job_url"] = str(data["job_url"])
+
         self.repository.update(
             application=app,
-            data=payload.model_dump(exclude_unset=True),
+            data=data,
         )
         self.db.commit()
         self.db.refresh(app)

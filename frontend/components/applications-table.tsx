@@ -11,8 +11,8 @@ import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import type { Application } from "@/lib/types";
 
-function formatDate(iso: string): string {
-  return iso.slice(0, 10);
+function formatDate(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "—";
 }
 
 export function ApplicationsTable({
@@ -87,7 +87,7 @@ export function ApplicationsTable({
                 {application.location ?? "—"}
               </TableCell>
               <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
-                {formatDate(application.stage_changed_at ?? application.created_at)}
+                {formatDate(application.stage_changed_at)}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
