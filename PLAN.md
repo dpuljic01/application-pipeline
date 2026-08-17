@@ -34,6 +34,7 @@ Work linearly. Each day builds on the previous one. If a day takes longer than 3
 - ✅ Day 6 — Cognito Setup + JWT Verification (JWKS cache, `/me` endpoint, `core/security/`)
 - ⬜ Day 4 — Company Model + Relationships (next up)
 - 🟨 Day 7 — Route protection done (`get_current_user_id()` stub replaced with real `get_current_user`, verified against live Cognito); still open: global exception handler with consistent JSON error shape, JWKS-unreachable → 503
+- 🟨 Day 17 — pulled forward, out of order (see `frontend/`): login + application dashboard (table, add-application dialog, stage-change dropdown honoring `ALLOWED_TRANSITIONS`) built and verified against live Cognito + the real API. Deviates from the plan on two points: direct login form calling Cognito's `InitiateAuth` instead of the documented Hosted UI redirect, and no token persistence across page refresh (in-memory only, by design, no silent refresh yet). Match score and everything else in Day 17/18 still blocked on Days 8-16.
 
 ---
 
