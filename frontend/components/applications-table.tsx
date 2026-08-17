@@ -53,7 +53,7 @@ export function ApplicationsTable({
               Location
             </TableHead>
             <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-              Applied
+              Stage since
             </TableHead>
             <TableHead className="text-right font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
               Actions
