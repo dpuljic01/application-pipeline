@@ -77,3 +77,14 @@ dist/
 # Claude Code (local-only)
 # =====================
 .claude/settings.local.json
+
+# =====================
+# Terraform
+# =====================
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/terraform.tfvars
+infra/*.auto.tfvars
+infra/crash.log
+infra/crash.*.log
