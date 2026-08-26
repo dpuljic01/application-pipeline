@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { MagneticDots } from "@/components/magnetic-dots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,8 +31,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid-texture flex min-h-screen flex-1 items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen flex-1 items-center justify-center overflow-hidden bg-background px-4">
+      <MagneticDots />
+      <div className="relative z-10 w-full max-w-sm">
         <div className="mb-8 text-center">
           <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
             Application Pipeline

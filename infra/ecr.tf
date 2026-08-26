@@ -1,6 +1,10 @@
 resource "aws_ecr_repository" "main" {
   name                 = "${var.project_name}-backend"
   image_tag_mutability = "IMMUTABLE" // prevent overwriting existing image tags
+  force_delete         = true        // allow `terraform destroy` to remove the repo even with images still in it —
+  // images are trivially rebuildable from the committed Dockerfile + a git SHA tag, and this repo is meant
+  // to be destroyed and recreated every demo/dev session, so the default "refuse if not empty" safety net
+  // isn't protecting anything real here
 
   image_scanning_configuration {
     scan_on_push = true // automatically scan images for vulnerabilities when pushed

@@ -102,14 +102,3 @@
     @apply font-sans;
   }
 }
-
-@layer utilities {
-  .grid-texture {
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      color-mix(in oklab, var(--foreground) 14%, transparent) 1px,
-      transparent 0
-    );
-    background-size: 28px 28px;
-  }
-}

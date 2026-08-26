@@ -7,6 +7,7 @@ import { listApplications, ApiError } from "@/lib/api";
 import { APPLICATION_STAGES } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { ApplicationsTable } from "@/components/applications-table";
+import { StatsRow } from "@/components/stats-row";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,7 +78,7 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
               Application Pipeline
@@ -90,7 +91,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+        <StatsRow applications={applications} />
+
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-sm text-muted-foreground">
