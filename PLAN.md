@@ -35,7 +35,9 @@ Work linearly. Each day builds on the previous one. If a day takes longer than 3
 - ⬜ Day 4 — Company Model + Relationships (next up)
 - 🟨 Day 7 — Route protection done (`get_current_user_id()` stub replaced with real `get_current_user`, verified against live Cognito); still open: global exception handler with consistent JSON error shape, JWKS-unreachable → 503
 - 🟨 Day 17 — pulled forward, out of order (see `frontend/`): login + application dashboard (table, add-application dialog, stage-change dropdown honoring `ALLOWED_TRANSITIONS`) built and verified against live Cognito + the real API. Deviates from the plan on two points: direct login form calling Cognito's `InitiateAuth` instead of the documented Hosted UI redirect, and no token persistence across page refresh (in-memory only, by design, no silent refresh yet). Match score and everything else in Day 17/18 still blocked on Days 8-16.
-- ⬜ Deploy (compresses Days 13-14, not started) — decided 2026-08-17: backend to AWS via Terraform (VPC, RDS, ECR, ECS Fargate, ALB with HTTPS/ACM — PLAN.md's plain-HTTP ALB isn't enough once the frontend is on Vercel, since browsers block HTTPS→HTTP calls), frontend to **Vercel** rather than AWS (never an actual AWS-learning goal in this plan, and the app is 100% client-rendered already so it doesn't need a Next.js server). Domain: `api.puljic.ch` (hosttech DNS, same domain as the portfolio site). Out of scope for the first pass: GitHub Actions → ECS (Day 16), S3 docs (Day 15), Route53, Multi-AZ/autoscaling. **Important:** user wants to write the Terraform themselves with step-by-step guidance, not receive finished `.tf` files — see `feedback-teach-aws-topics` memory.
+- 🟨 Day 13 — VPC + RDS + Secrets Manager built and applied (2026-08-25/26): 2 public + 2 private subnets, NAT/IGW, all three security groups, RDS Postgres 16 on `db.t4g.micro` (ARM/Graviton, not the spec'd `db.t3.micro` — cheaper, still free-tier eligible), password generated via `random_password` and mirrored into Secrets Manager. Migrations ran via a one-off ECS Fargate task (RDS has no public access, so "from your local machine" as originally planned wasn't actually possible — this is a better pattern anyway, see concepts doc §25). Still open: `storage_encrypted` and `backup_retention_period` are not set on the RDS instance despite Day 13's own acceptance criteria calling for encryption-at-rest and automated backups — a real gap, not yet fixed. No `outputs.tf` (values pulled via AWS CLI as needed instead).
+- 🟨 Day 14 — ECR + ECS Fargate + ALB built and applied (2026-08-26): `ecs.tf` (cluster, task definition, execution role + task role, service) and `alb.tf` (ALB, target group with `target_type = "ip"`, HTTP listener) all as spec'd. Image built for `linux/amd64` (Fargate's default, not the build machine's native ARM64) and pushed to ECR tagged by git short SHA, `IMMUTABLE` mutability. Verified end-to-end: `GET /api/health` → `{"status":"ok","db":true}` through the ALB, local frontend pointed at the live ALB and used successfully against real Cognito auth. Stack was then `terraform destroy`'d per the cost-management plan — not left running. Deviation: health check path is `/api/health`, not `/health` (app mounts all routes under `/api`). Not tested: automatic task replacement on failure (never manually killed a running task to observe it).
+- ⬜ Remaining deploy work (Days 15-16 + the original Deploy note) — decided 2026-08-17: backend to AWS via Terraform, frontend to **Vercel** rather than AWS (never an actual AWS-learning goal in this plan, and the app is 100% client-rendered already so it doesn't need a Next.js server). Domain: `api.puljic.ch` (hosttech DNS, same domain as the portfolio site). Still needed before a real frontend+backend demo works: ACM certificate + HTTPS listener + DNS record (a plain-HTTP ALB isn't enough once the frontend is on Vercel — browsers block HTTPS→HTTP calls), CORS update for the Vercel origin, and the actual Vercel deploy. Also out of scope so far: GitHub Actions → ECS (Day 16), S3 docs (Day 15), Route53, Multi-AZ/autoscaling. **Important:** user wants to write the Terraform themselves with step-by-step guidance, not receive finished `.tf` files — see `feedback-teach-aws-topics` memory.
 
 ---
 
@@ -350,44 +352,44 @@ Never expose ORM models directly in the API. `ApplicationRead` uses `model_confi
 
 > **Cost management:** the NAT Gateway (~$32-35/mo) and ALB (~$16-20/mo) are the real cost risks here, not CloudWatch (basic Logs usage stays in the Always Free tier). Treat the stack as demo-on-demand: `terraform apply` before a review/interview/demo, `terraform destroy` right after, rather than leaving it running 24/7. This is also a legitimate interview answer, not just a cost hack — it shows deliberate cost control during dev.
 
-### Day 13 — Terraform Foundations: VPC + RDS + Secrets Manager
+### Day 13 — Terraform Foundations: VPC + RDS + Secrets Manager 🟨
 
 **Goal:** Network layer and managed database, as code.
 
 **Context:** Every Swiss company doing AWS uses IaC. This day covers VPC fundamentals (public/private subnets, NAT, security groups) and RDS with proper secret handling — both come up in nearly every backend interview.
 
 **Tasks:**
-1. `infra/` with `main.tf`, `vpc.tf`, `variables.tf`, `outputs.tf`, `terraform.tfvars` (gitignored).
-2. VPC: 2 public subnets (ALB), 2 private subnets (ECS, RDS), NAT Gateway, Internet Gateway.
-3. Security groups: ALB (80/443 from anywhere), App (only from ALB SG), DB (5432 only from App SG).
-4. RDS PostgreSQL 16, `db.t3.micro`, private subnets, automated backups, encryption at rest.
-5. Secrets Manager: DB credentials via `random_password`, never in Terraform state or plain env vars.
-6. Run Alembic migrations against RDS from your local machine (CI/CD handles this later).
+1. 🟨 `infra/` with `main.tf`, `vpc.tf`, `variables.tf`, `terraform.tfvars` (gitignored). *No `outputs.tf` — nothing outside this Terraform run has needed the values yet, so they're pulled via `aws` CLI as needed instead.*
+2. ✅ VPC: 2 public subnets (ALB), 2 private subnets (ECS, RDS), NAT Gateway, Internet Gateway.
+3. ✅ Security groups: ALB (80/443 from anywhere), App (only from ALB SG), DB (5432 only from App SG).
+4. 🟨 RDS PostgreSQL 16, private subnets. *Instance class is `db.t4g.micro` (ARM/Graviton, deliberate — cheaper, still free-tier eligible), not the spec'd `db.t3.micro`. Automated backups and encryption at rest are **not** configured — `storage_encrypted`/`backup_retention_period` aren't set on `aws_db_instance.main`, a real gap against this day's own acceptance criteria.*
+5. 🟨 Secrets Manager: DB password generated via `random_password`, stored in Secrets Manager as a full `DATABASE_URL` connection string (not just the raw password — ECS's `secrets` injection can only hand a container a whole env var from a secret, not interpolate a secret into the middle of a larger string, so the composed URL has to be what's stored). *Caveat on "never in Terraform state": `random_password`'s result is still recorded in state regardless — nothing Terraform manages directly escapes that. What actually improved: no password hand-typed into a `.tfvars` file, and Secrets Manager governs runtime access.*
+6. 🟨 Migrations. *Not run "from your local machine" as planned — RDS has no public access (correctly, by design), so that was never actually possible. Ran instead via a one-off ECS Fargate task, same image, `command` overridden to `alembic upgrade head`. See concepts doc §25 — arguably the better pattern anyway, and one CI/CD (Day 16) can reuse directly.*
 
 **Acceptance Criteria:**
-- `terraform plan`/`apply` produce the expected VPC, subnets, gateways, security groups, RDS instance.
-- DB not reachable from the internet — only from the app security group.
-- Credentials live in Secrets Manager, not Terraform state.
+- ✅ `terraform plan`/`apply` produce the expected VPC, subnets, gateways, security groups, RDS instance.
+- ✅ DB not reachable from the internet — only from the app security group.
+- 🟨 Credentials live in Secrets Manager — see the state-exposure caveat under task 5.
 
 **Learning Checkpoint:** Why put the database in a private subnet? Why is Terraform state not a safe place for credentials?
 
 ---
 
-### Day 14 — ECR + ECS Fargate Deployment
+### Day 14 — ECR + ECS Fargate Deployment 🟨
 
 **Goal:** Containerize and deploy the FastAPI app to ECS Fargate.
 
 **Context:** Fargate is serverless containers — no EC2 management. Understanding task definitions, services, and ALB target groups is essential for any AWS backend role.
 
 **Tasks:**
-1. ECR repository; build, tag, push the Docker image.
-2. `ecs.tf`: cluster, task definition (256 CPU / 512 MB, env vars from Secrets Manager), service (1 desired task, private subnets, App SG), task execution role (pull image, read secrets) + task role (future S3/other access).
-3. `alb.tf`: ALB in public subnets, target group, listener on 80, health check on `/health`.
+1. ✅ ECR repository; build, tag, push the Docker image. *Tagged by git short SHA (`IMMUTABLE` mutability, so `latest` can't be reused anyway), built explicitly for `linux/amd64` since Fargate defaults to x86 and the dev machine is ARM64 — building without `--platform` would produce a task that fails with an exec-format error.*
+2. ✅ `ecs.tf`: cluster, task definition (256 CPU / 512 MB, env vars + `DATABASE_URL` from Secrets Manager), service (1 desired task, private subnets, App SG), task execution role (pull image, read secrets — scoped to just this project's secret ARN) + task role (empty for now, reserved for Day 15's S3 access).
+3. 🟨 `alb.tf`: ALB in public subnets, target group (`target_type = "ip"` — required for Fargate's `awsvpc` networking, tasks aren't EC2 instances), listener on 80. *Health check path is `/api/health`, not `/health` — the app mounts every route under an `/api` prefix.*
 
 **Acceptance Criteria:**
-- ALB URL returns `{"status": "ok", "db": true}`.
-- App connects to RDS through private networking; container logs appear in CloudWatch.
-- Stopping the task triggers automatic replacement.
+- ✅ ALB URL returns `{"status": "ok", "db": true}` — verified live, then torn down (`terraform destroy`) per the cost-management plan rather than left running.
+- ✅ App connects to RDS through private networking; container logs appear in CloudWatch.
+- ⬜ Stopping the task triggers automatic replacement — not actually tested this pass.
 
 **Learning Checkpoint:** What's the difference between the task execution role and the task role? Why does ECS need both?
 
