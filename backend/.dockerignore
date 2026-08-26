@@ -1,0 +1,16 @@
+# secrets — never let these end up in an image layer pushed to ECR
+.env
+.env.*
+!.env.example
+
+# local dev / virtualenv artifacts — irrelevant inside the container, and would
+# shadow the venv the Dockerfile builds itself if accidentally copied in
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+
+# not needed at runtime
+tests
+docker-compose.yml

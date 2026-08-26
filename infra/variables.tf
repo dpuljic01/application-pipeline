@@ -16,8 +16,17 @@ variable "domain_name" {
   default     = "puljic.ch"
 }
 
-variable "db_password" {
-  description = "Master password for the RDS database instance"
+variable "cognito_user_pool_id" {
+  type    = string
+  default = "eu-central-1_V6q5uBZeF"
+}
+
+variable "cognito_app_client_id" {
+  type    = string
+  default = "2liul3p0l4fr3fs9mi3bdrdlpp"
+}
+
+variable "image_tag" {
+  description = "Docker image tag to deploy — passed explicitly at apply time, e.g. -var=\"image_tag=$(git rev-parse --short HEAD)\""
   type        = string
-  sensitive   = true // no default — real value set locally in terraform.tfvars (gitignored), never committed
 }

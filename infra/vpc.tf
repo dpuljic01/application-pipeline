@@ -77,7 +77,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_eip" "nat" {
   domain = "vpc"
-  
+
   tags = {
     Name = "${var.project_name}-nat-eip"
   }
@@ -148,10 +148,10 @@ resource "aws_security_group" "ecs" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Allow traffic from ALB"
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
+    description     = "Allow traffic from ALB"
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
 
@@ -174,10 +174,10 @@ resource "aws_security_group" "rds" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Allow traffic from ECS tasks"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
+    description     = "Allow traffic from ECS tasks"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
     security_groups = [aws_security_group.ecs.id]
   }
 
