@@ -50,3 +50,15 @@ class ActivityType(str, Enum):
     OFFER = "OFFER"
     REJECTION = "REJECTION"
     STAGE_CHANGE = "STAGE_CHANGE"
+
+
+class LLMProviderName(str, Enum):
+    GEMINI = "gemini"
+    ANTHROPIC = "anthropic"
+    CEREBRAS = "cerebras"
+
+
+class CompanySize(str, Enum):
+    STARTUP = "STARTUP"
+    MID = "MID"
+    ENTERPRISE = "ENTERPRISE"

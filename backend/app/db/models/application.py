@@ -21,6 +21,16 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     company: Mapped[str] = mapped_column(String(200), nullable=False)
+    # Nullable for now (Day 4): free-text `company` above stays the source
+    # of truth for existing rows and for display; this FK is populated by
+    # ApplicationService going forward (either an explicit company_id, or
+    # an auto-created/linked Company resolved from `company` by name).
+    company_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     role_title: Mapped[str] = mapped_column(String(128), nullable=False)
     job_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     location: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -36,6 +46,9 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     stage_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user = relationship("User", back_populates="applications")
+    # Named `linked_company`, not `company` — that name is already the
+    # existing free-text string column above.
+    linked_company = relationship("Company", back_populates="applications")
     activities = relationship(
         "Activity",
         back_populates="application",

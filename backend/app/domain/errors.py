@@ -12,3 +12,7 @@ class Forbidden(DomainError):
 
 class InvalidTransition(DomainError):
     pass
+
+
+class CompanyHasApplications(DomainError):
+    pass

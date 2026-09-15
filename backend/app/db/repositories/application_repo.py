@@ -26,6 +26,19 @@ class ApplicationRepository:
         )
         return self.db.scalars(stmt).all()
 
+    def list_for_company(self, *, user_id: UUID, company_id: UUID) -> list[Application]:
+        stmt = select(Application).where(
+            Application.user_id == user_id,
+            Application.company_id == company_id,
+        )
+        return self.db.scalars(stmt).all()
+
+    def has_for_company(self, *, company_id: UUID) -> bool:
+        stmt = (
+            select(Application.id).where(Application.company_id == company_id).limit(1)
+        )
+        return self.db.scalar(stmt) is not None
+
     def create(
         self,
         *,
@@ -35,10 +48,12 @@ class ApplicationRepository:
         job_url: str | None,
         location: str | None = None,
         salary_range: str | None = None,
+        company_id: UUID | None = None,
     ) -> Application:
         app = Application(
             user_id=user_id,
             company=company,
+            company_id=company_id,
             role_title=role_title,
             job_url=job_url,
             location=location,
@@ -50,6 +65,9 @@ class ApplicationRepository:
     def update(self, *, application: Application, data: dict) -> None:
         for field, value in data.items():
             setattr(application, field, value)
+
+    def delete(self, *, application: Application) -> None:
+        self.db.delete(application)
 
     def update_stage(
         self,

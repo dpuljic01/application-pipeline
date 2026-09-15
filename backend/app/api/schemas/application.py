@@ -11,6 +11,10 @@ class ApplicationCreate(BaseModel):
     job_url: AnyHttpUrl | None = None
     location: str | None = None
     salary_range: str | None = None
+    # Optional: link to an existing Company explicitly. Omit it and the
+    # service auto-creates/links one by matching `company` (case-insensitive)
+    # against the user's existing companies.
+    company_id: UUID | None = None
 
 
 class StageChangeRequest(BaseModel):
@@ -31,6 +35,7 @@ class ApplicationRead(BaseModel):
 
     id: UUID
     company: str
+    company_id: UUID | None
     role_title: str
     job_url: str | None
     location: str | None
