@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     ADZUNA_APP_KEY: str | None = None
     ADZUNA_COUNTRY: str = "ch"
 
+    # Comma-separated — was hardcoded to localhost only, which breaks the
+    # moment the frontend is deployed anywhere real (Vercel, etc.)
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [
+            origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
+        ]
+
     @property
     def cognito_issuer(self) -> str:
         # Concept: issuer is used to validate `iss` claim in JWT

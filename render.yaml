@@ -1,0 +1,47 @@
+# Render Blueprint — free-tier backend deploy (Track A: the always-reachable,
+# no-cost version of the app; separate from the AWS deploy built for the
+# LinkedIn launch window). Connect this repo in the Render dashboard via
+# "New > Blueprint" and it reads this file automatically.
+#
+# The database is intentionally NOT Render's own Postgres (its free tier
+# expires after 30 days) — DATABASE_URL below points at an external Neon
+# database instead, entered manually since Render has no built-in way to
+# reference a non-Render database.
+services:
+  - type: web
+    name: app-pipeline-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # paste the Neon connection string here on first deploy
+      - key: COGNITO_REGION
+        value: eu-central-1
+      - key: COGNITO_USER_POOL_ID
+        value: eu-central-1_V6q5uBZeF
+      - key: COGNITO_APP_CLIENT_ID
+        value: 2liul3p0l4fr3fs9mi3bdrdlpp
+      - key: CORS_ORIGINS
+        sync: false # the deployed Vercel frontend's URL(s), comma-separated
+      - key: LLM_ENABLED
+        value: "true"
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CEREBRAS_API_KEY
+        sync: false
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false
+      - key: ADZUNA_COUNTRY
+        value: ch
