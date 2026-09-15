@@ -14,6 +14,17 @@ class Settings(BaseSettings):
     COGNITO_USER_POOL_ID: str
     COGNITO_APP_CLIENT_ID: str
 
+    LLM_ENABLED: bool = True
+    LLM_PROVIDER: str = "gemini"
+    LLM_MODEL: str | None = None
+    GEMINI_API_KEY: str | None = None
+    ANTHROPIC_API_KEY: str | None = None
+    CEREBRAS_API_KEY: str | None = None
+
+    ADZUNA_APP_ID: str | None = None
+    ADZUNA_APP_KEY: str | None = None
+    ADZUNA_COUNTRY: str = "ch"
+
     @property
     def cognito_issuer(self) -> str:
         # Concept: issuer is used to validate `iss` claim in JWT

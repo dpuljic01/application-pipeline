@@ -46,6 +46,11 @@ DATABASE_URL=postgresql+psycopg://app_pipeline_user:app_pipeline_password@localh
 COGNITO_REGION=
 COGNITO_USER_POOL_ID=
 COGNITO_APP_CLIENT_ID=
+LLM_ENABLED=true
+LLM_PROVIDER=gemini
+LLM_MODEL=
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
 ```
 
 ## Architecture
