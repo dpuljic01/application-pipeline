@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { MagneticDots } from "@/components/magnetic-dots";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,13 @@ export default function LoginPage() {
           >
             {status === "authenticating" ? "Authenticating…" : "Sign in"}
           </Button>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="underline underline-offset-2 hover:text-foreground">
+              Sign up
+            </Link>
+          </p>
         </form>
       </div>
     </div>
