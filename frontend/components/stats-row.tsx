@@ -10,10 +10,8 @@ function Stat({
   className?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <p className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
-        {label}
-      </p>
+    <div className="rounded-[3px] border border-border bg-card px-4 py-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className={`mt-1 text-2xl font-semibold tabular-nums ${className ?? "text-foreground"}`}>
         {value}
       </p>
@@ -33,7 +31,11 @@ export function StatsRow({ applications }: { applications: Application[] }) {
   return (
     <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Stat label="Total" value={applications.length} />
-      <Stat label="Interviewing" value={interviewing} className="text-primary" />
+      <Stat
+        label="Interviewing"
+        value={interviewing}
+        className="text-[var(--stage-progress)]"
+      />
       <Stat label="Offers" value={offers} className="text-[var(--stage-win)]" />
       <Stat
         label="Rejected / Ghosted"

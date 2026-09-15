@@ -44,7 +44,16 @@ export function StageChangeMenu({
 
   if (nextStages.length === 0) {
     return (
-      <span className="font-mono text-xs text-muted-foreground">no transitions</span>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled
+        title="Terminal stage — no further transitions"
+        className="h-7 text-xs"
+      >
+        Change stage
+        <ChevronDown className="size-3" />
+      </Button>
     );
   }
 

@@ -2,14 +2,17 @@ import { Ghost, Undo2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApplicationStage } from "@/lib/types";
 
-// Visual weight increases as an application moves through the pipeline —
-// the badge itself communicates "how far along is this one" at a glance.
-// Terminal states (win or exit) get their own distinct treatment.
+// Same colors as the Pipeline chart (components/stage-breakdown.tsx):
+// Applied's blue, Interview as a subtle indigo shift off it, a distinct
+// orange for Offer (the "getting real" moment), and the existing win-green
+// for Accepted. Not --primary's amber anywhere here.
 const STAGE_STYLES: Record<ApplicationStage, string> = {
   SAVED: "border border-border bg-transparent text-muted-foreground",
-  APPLIED: "border border-primary/30 bg-primary/10 text-primary",
-  INTERVIEW: "border border-primary/50 bg-primary/20 text-primary",
-  OFFER: "border border-primary bg-primary/85 text-primary-foreground",
+  APPLIED:
+    "border border-[var(--stage-progress)]/30 bg-[var(--stage-progress)]/10 text-[var(--stage-progress)]",
+  INTERVIEW:
+    "border border-[var(--stage-interview)]/50 bg-[var(--stage-interview)]/20 text-[var(--stage-interview)]",
+  OFFER: "border border-[var(--stage-offer)] bg-[var(--stage-offer)]/85 text-[#14110a]",
   ACCEPTED: "border border-transparent bg-[var(--stage-win)] text-[var(--stage-win-foreground)]",
   REJECTED: "border border-transparent bg-[var(--stage-exit)] text-[var(--stage-exit-foreground)]",
   WITHDRAWN: "border border-transparent bg-[var(--stage-exit)] text-[var(--stage-exit-foreground)]",
@@ -27,7 +30,7 @@ export function StageBadge({ stage }: { stage: ApplicationStage }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-mono text-[11px] tracking-wide uppercase",
+        "inline-flex items-center gap-1 rounded-[3px] px-2 py-0.5 font-mono text-[11px] tracking-wide uppercase",
         STAGE_STYLES[stage],
       )}
     >

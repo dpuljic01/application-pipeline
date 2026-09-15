@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -89,6 +89,27 @@
   --stage-win-foreground: #0f1a11;
   --stage-exit: #3a3d42;
   --stage-exit-foreground: #a9acb1;
+
+  /* Pipeline chart colors. Not --primary's amber anywhere here — amber
+     stays reserved for interactive elements only.
+     --stage-neutral: SAVED — hasn't really started, deliberately flat gray.
+     --stage-progress: APPLIED's blue.
+     --stage-interview: a gentle indigo shift off --stage-progress — same
+       family as Applied (still "pending, nothing decided"), just enough
+       violet to tell the two apart at a glance without a full second
+       identity color. A fully-separated violet was tried and tested unsafe
+       alongside blue under CVD simulation (dataviz skill, --pairs all) —
+       this is deliberately a *subtle* tint, not a categorical-strength
+       color, so that check doesn't apply the same way; legibility checked
+       instead (4.69:1 vs card).
+     --stage-offer: OFFER's own color — the "getting real" moment.
+     ACCEPTED reuses --stage-win below (already used for its badge).
+     Progress/offer/win validated as a set: CVD ΔE 9.8, normal-vision 22.2
+     (dataviz skill, scripts/validate_palette.js --pairs all). */
+  --stage-neutral: #64748b;
+  --stage-progress: #3987e5;
+  --stage-interview: #6586e7;
+  --stage-offer: #d95926;
 }
 
 @layer base {

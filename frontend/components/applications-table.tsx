@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -6,10 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ExternalLink } from "lucide-react";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import { StageBadge } from "@/components/stage-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
+import { DeleteApplicationDialog } from "@/components/delete-application-dialog";
+import { ApplicationCard } from "@/components/application-card";
 import type { Application } from "@/lib/types";
 
 function formatDate(iso: string | null): string {
@@ -19,17 +24,21 @@ function formatDate(iso: string | null): string {
 export function ApplicationsTable({
   applications,
   onChanged,
+  onDeleted,
   onUnauthorized,
 }: {
   applications: Application[];
   onChanged: (updated: Application) => void;
+  onDeleted: (applicationId: string) => void;
   onUnauthorized: () => void;
 }) {
+  const router = useRouter();
+
   if (applications.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border py-16 text-center">
+      <div className="rounded-[3px] border border-dashed border-border py-16 text-center">
         <p className="text-sm text-muted-foreground">No applications yet.</p>
-        <p className="mt-1 font-mono text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           Add one to start tracking the pipeline.
         </p>
       </div>
@@ -37,50 +46,51 @@ export function ApplicationsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <>
+      {/* Mobile: a table with 8 columns doesn't reflow, it just scrolls
+          sideways past Actions — a compact tap-through card instead. */}
+      <div className="space-y-2 md:hidden">
+        {applications.map((application) => (
+          <ApplicationCard key={application.id} application={application} />
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-[3px] border border-border md:block">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Company
             </TableHead>
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Role
             </TableHead>
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Stage
             </TableHead>
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Location
             </TableHead>
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Stage since
             </TableHead>
-            <TableHead className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Job Posting
             </TableHead>
-            <TableHead className="text-right font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <TableHead className="text-right text-xs font-medium text-muted-foreground">
               Actions
             </TableHead>
+            <TableHead aria-hidden className="w-4 p-0" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {applications.map((application) => (
-            <TableRow key={application.id}>
-              <TableCell className="py-4 font-medium">
-                {application.job_url ? (
-                  <a
-                    href={application.job_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-                  >
-                    {application.company}
-                  </a>
-                ) : (
-                  application.company
-                )}
-              </TableCell>
+            <TableRow
+              key={application.id}
+              onClick={() => router.push(`/applications/${application.id}`)}
+              className="cursor-pointer"
+            >
+              <TableCell className="py-4 font-medium">{application.company}</TableCell>
               <TableCell className="py-4 text-muted-foreground">
                 {application.role_title}
               </TableCell>
@@ -93,7 +103,9 @@ export function ApplicationsTable({
               <TableCell className="py-4 font-mono text-xs text-muted-foreground tabular-nums">
                 {formatDate(application.stage_changed_at)}
               </TableCell>
-              <TableCell className="py-4">
+              {/* stopPropagation: this cell has its own link (or nothing to
+                  click) — it must not also trigger the row's navigation. */}
+              <TableCell className="py-4" onClick={(e) => e.stopPropagation()}>
                 {application.job_url ? (
                   <a
                     href={application.job_url}
@@ -107,7 +119,12 @@ export function ApplicationsTable({
                   <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
-              <TableCell className="py-4 text-right">
+              {/* Same reasoning: Edit/Change stage/Delete are their own
+                  actions, not "open the detail page". */}
+              <TableCell
+                className="py-4 text-right"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex justify-end gap-2">
                   <EditApplicationDialog
                     application={application}
@@ -119,12 +136,23 @@ export function ApplicationsTable({
                     onChanged={onChanged}
                     onUnauthorized={onUnauthorized}
                   />
+                  <DeleteApplicationDialog
+                    application={application}
+                    onDeleted={onDeleted}
+                    onUnauthorized={onUnauthorized}
+                  />
                 </div>
+              </TableCell>
+              {/* Visual-only affordance that the row itself is clickable —
+                  no stopPropagation here, so it lets the row's onClick fire. */}
+              <TableCell className="py-4 pr-3 pl-0 text-muted-foreground">
+                <ChevronRight className="size-4" />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-    </div>
+      </div>
+    </>
   );
 }

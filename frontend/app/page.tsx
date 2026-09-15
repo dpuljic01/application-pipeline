@@ -8,6 +8,7 @@ import { APPLICATION_STAGES } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { ApplicationsTable } from "@/components/applications-table";
 import { StatsRow } from "@/components/stats-row";
+import { StageBreakdown } from "@/components/stage-breakdown";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,10 @@ export default function DashboardPage() {
     setApplications((prev) => prev.map((app) => (app.id === updated.id ? updated : app)));
   }
 
+  function handleDeleted(applicationId: string) {
+    setApplications((prev) => prev.filter((app) => app.id !== applicationId));
+  }
+
   if (!isAuthenticated) {
     return null;
   }
@@ -93,12 +98,17 @@ export default function DashboardPage() {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
         <StatsRow applications={applications} />
+        <div className="mb-5">
+          <StageBreakdown applications={applications} />
+        </div>
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm text-muted-foreground">
-              Applications{" "}
-              <span className="font-mono tabular-nums">· {applications.length}</span>
+            <h1 className="flex items-center gap-2 text-sm text-muted-foreground">
+              Applications
+              <span className="rounded-[3px] bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground tabular-nums">
+                {applications.length}
+              </span>
             </h1>
           </div>
           <AddApplicationDialog onCreated={handleCreated} onUnauthorized={handleUnauthorized} />
@@ -135,6 +145,7 @@ export default function DashboardPage() {
           <ApplicationsTable
             applications={filtered}
             onChanged={handleChanged}
+            onDeleted={handleDeleted}
             onUnauthorized={handleUnauthorized}
           />
         )}
