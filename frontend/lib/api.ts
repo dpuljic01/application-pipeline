@@ -1,4 +1,6 @@
 import type {
+  Activity,
+  ActivityCreateInput,
   Application,
   ApplicationCreateInput,
   ApplicationStage,
@@ -46,6 +48,13 @@ export function listApplications(token: string): Promise<Application[]> {
   return request<Application[]>("/applications", token);
 }
 
+export function getApplication(
+  token: string,
+  applicationId: string,
+): Promise<Application> {
+  return request<Application>(`/applications/${applicationId}`, token);
+}
+
 export function createApplication(
   token: string,
   input: ApplicationCreateInput,
@@ -64,6 +73,33 @@ export function updateApplication(
   return request<Application>(`/applications/${applicationId}`, token, {
     method: "PUT",
     body: JSON.stringify(input),
+  });
+}
+
+export function listActivities(
+  token: string,
+  applicationId: string,
+): Promise<Activity[]> {
+  return request<Activity[]>(`/applications/${applicationId}/activities`, token);
+}
+
+export function createActivity(
+  token: string,
+  applicationId: string,
+  input: ActivityCreateInput,
+): Promise<Activity> {
+  return request<Activity>(`/applications/${applicationId}/activities`, token, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteApplication(
+  token: string,
+  applicationId: string,
+): Promise<void> {
+  return request<void>(`/applications/${applicationId}`, token, {
+    method: "DELETE",
   });
 }
 
