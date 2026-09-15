@@ -83,19 +83,99 @@ resource "aws_eip" "nat" {
   }
 }
 
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+/*
+Concept — NAT instance vs. NAT Gateway: same job (give private-subnet
+resources outbound-only internet access), different bill. The managed NAT
+Gateway is ~$32-35/mo flat, before any data even moves through it — the
+single biggest line item in this whole stack for a personal, low-traffic
+project. A NAT instance is just a regular EC2 box doing the same routing
+job in software (IP forwarding + NAT/masquerade) — t4g.nano runs ~$3/mo.
+The trade: you own patching/updates on it, and it's a single instance (no
+built-in HA the way the managed NAT Gateway has) — a real tradeoff, not a
+free lunch, but a reasonable one for a side project, not a production SLA.
+*/
+data "aws_ami" "nat_instance" {
+  most_recent = true
+  owners      = ["amazon"]
 
-  depends_on = [aws_internet_gateway.main] // ensure IGW is created first
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-arm64"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["arm64"]
+  }
+}
+
+resource "aws_security_group" "nat_instance" {
+  name        = "${var.project_name}-nat-instance-sg"
+  description = "Allow traffic from the private subnets to route out through the NAT instance"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow all traffic from inside the VPC - this instance is the private subnets route to the internet"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  egress {
+    description = "Allow all outbound traffic to the internet"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-nat-instance-sg"
+  }
+}
+
+resource "aws_instance" "nat" {
+  ami                    = data.aws_ami.nat_instance.id
+  instance_type          = "t4g.nano" // cheapest Graviton/ARM burstable type — this box just forwards packets, it doesn't need real compute
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.nat_instance.id]
+
+  // Required for NAT: by default AWS drops any traffic not addressed
+  // to/from the instance itself. A NAT instance's whole job is forwarding
+  // traffic for *other* hosts (the private subnets), so that check has to
+  // be disabled — this is the one setting a NAT Gateway doesn't require
+  // you to know about, since AWS manages it internally there.
+  source_dest_check = false
+
+  user_data = <<-EOF
+    #!/bin/bash
+    set -e
+    sysctl -w net.ipv4.ip_forward=1
+    sed -i '/net.ipv4.ip_forward/d' /etc/sysctl.conf
+    echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+    # AL2023 ships nftables by default but keeps the iptables-nft
+    # compatibility shim, so plain iptables commands still work.
+    iptables -t nat -A POSTROUTING ! -o lo -j MASQUERADE
+    iptables-save > /etc/sysconfig/iptables 2>/dev/null || true
+  EOF
+
+  tags = {
+    Name = "${var.project_name}-nat-instance"
+  }
+}
+
+resource "aws_eip_association" "nat" {
+  instance_id   = aws_instance.nat.id
+  allocation_id = aws_eip.nat.id
 }
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main.id
+    cidr_block           = "0.0.0.0/0"
+    network_interface_id = aws_instance.nat.primary_network_interface_id
   }
 
   tags = {
