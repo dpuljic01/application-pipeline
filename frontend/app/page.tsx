@@ -22,7 +22,7 @@ import {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { idToken, email, isAuthenticated, logout } = useAuth();
+  const { idToken, email, isAuthenticated, isRestoring, logout } = useAuth();
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,7 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    if (isRestoring) return;
     if (!isAuthenticated) {
       router.push("/login");
       return;
@@ -50,7 +51,7 @@ export default function DashboardPage() {
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idToken, isAuthenticated]);
+  }, [idToken, isAuthenticated, isRestoring]);
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
@@ -76,7 +77,7 @@ export default function DashboardPage() {
     setApplications((prev) => prev.filter((app) => app.id !== applicationId));
   }
 
-  if (!isAuthenticated) {
+  if (isRestoring || !isAuthenticated) {
     return null;
   }
 

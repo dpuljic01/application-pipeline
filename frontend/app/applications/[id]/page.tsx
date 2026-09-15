@@ -21,7 +21,7 @@ function formatDate(iso: string | null): string {
 export default function ApplicationDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { idToken, isAuthenticated, logout } = useAuth();
+  const { idToken, isAuthenticated, isRestoring, logout } = useAuth();
 
   const [application, setApplication] = useState<Application | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -34,6 +34,7 @@ export default function ApplicationDetailPage() {
   }
 
   useEffect(() => {
+    if (isRestoring) return;
     if (!isAuthenticated) {
       router.push("/login");
       return;
@@ -57,7 +58,7 @@ export default function ApplicationDetailPage() {
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idToken, isAuthenticated, params.id]);
+  }, [idToken, isAuthenticated, isRestoring, params.id]);
 
   function handleChanged(updated: Application) {
     setApplication(updated);
@@ -67,7 +68,7 @@ export default function ApplicationDetailPage() {
     setActivities((prev) => [activity, ...prev]);
   }
 
-  if (!isAuthenticated) {
+  if (isRestoring || !isAuthenticated) {
     return null;
   }
 

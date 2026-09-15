@@ -29,6 +29,7 @@ jobs:
       COGNITO_REGION: eu-central-1
       COGNITO_USER_POOL_ID: placeholder
       COGNITO_APP_CLIENT_ID: placeholder
+      CORS_ORIGINS: http://localhost:3000,https://application-pipeline.vercel.app
 
     defaults:
       run:

@@ -1,16 +1,23 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { API_BASE_URL } from "@/lib/api";
+
+// Refresh a bit before actual expiry, not right at the edge — avoids a
+// request going out with a token that expires mid-flight.
+const REFRESH_SKEW_MS = 60_000;
 
 interface CognitoErrorResult {
   message?: string;
   __type?: string;
 }
 
-// Cognito's identity-provider actions (InitiateAuth, SignUp, ConfirmSignUp,
-// ...) are all public, unauthenticated REST calls — no SDK, no signing, just
-// the app client ID. Called directly from the browser for all of them.
+// SignUp/ConfirmSignUp/ResendConfirmationCode carry no tokens, so they stay
+// as public, unauthenticated calls straight from the browser to Cognito.
+// Login/refresh/logout instead go through the backend below — that's the
+// only party that ever sees the refresh token, held in an HttpOnly cookie
+// the browser never lets JS read.
 async function cognitoRequest<T>(
   action: string,
   body: Record<string, unknown>,
@@ -30,34 +37,12 @@ async function cognitoRequest<T>(
   const data = (await res.json()) as T & CognitoErrorResult;
 
   if (!res.ok) {
-    // Cognito's own message is specific ("Password did not conform with
-    // policy...", "User already exists", "Invalid verification code...") —
-    // surface it as-is rather than a generic failure string.
     throw new Error(data.message ?? "Request failed");
   }
 
   return data;
 }
 
-async function cognitoInitiateAuth(username: string, password: string): Promise<string> {
-  const data = await cognitoRequest<{
-    AuthenticationResult?: { IdToken: string; AccessToken: string; ExpiresIn: number };
-  }>("InitiateAuth", {
-    AuthFlow: "USER_PASSWORD_AUTH",
-    AuthParameters: { USERNAME: username, PASSWORD: password },
-  });
-
-  if (!data.AuthenticationResult) {
-    throw new Error("Sign in failed");
-  }
-
-  return data.AuthenticationResult.IdToken;
-}
-
-// Self-service registration — the two Cognito calls a new user needs before
-// they can sign in: create the account, then confirm it with the emailed
-// code. Standalone (not part of AuthContext) since neither one produces a
-// signed-in session by itself.
 export async function signUp(email: string, password: string): Promise<void> {
   await cognitoRequest("SignUp", {
     Username: email,
@@ -77,17 +62,60 @@ export async function resendSignUpCode(email: string): Promise<void> {
   await cognitoRequest("ResendConfirmationCode", { Username: email });
 }
 
+interface TokenResponse {
+  id_token: string;
+}
+
+async function backendLogin(username: string, password: string): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail ?? "Sign in failed");
+  }
+
+  return ((await res.json()) as TokenResponse).id_token;
+}
+
+// Returns null on any failure (no cookie, expired, revoked) rather than
+// throwing — callers treat "no session" as a normal, expected outcome.
+async function backendRefresh(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    return ((await res.json()) as TokenResponse).id_token;
+  } catch {
+    return null;
+  }
+}
+
+async function backendLogout(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" });
+  } catch {
+    // best-effort — the in-memory token is cleared regardless
+  }
+}
+
 // Display-only — never used for authorization decisions. The backend
 // independently verifies the token's signature on every request.
-function decodeEmailForDisplay(idToken: string): string | null {
+function decodeClaims(idToken: string): { email: string | null; exp: number | null } {
   try {
     const payload = idToken.split(".")[1];
     const padded = payload.padEnd(payload.length + ((4 - (payload.length % 4)) % 4), "=");
     const json = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
-    const claims = JSON.parse(json) as { email?: string };
-    return claims.email ?? null;
+    const claims = JSON.parse(json) as { email?: string; exp?: number };
+    return { email: claims.email ?? null, exp: claims.exp ?? null };
   } catch {
-    return null;
+    return { email: null, exp: null };
   }
 }
 
@@ -95,6 +123,7 @@ interface AuthContextValue {
   idToken: string | null;
   email: string | null;
   isAuthenticated: boolean;
+  isRestoring: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -102,27 +131,63 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // In-memory only — never localStorage/sessionStorage. Lost on refresh by design.
   const [idToken, setIdToken] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
 
   const login = useCallback(async (username: string, password: string) => {
-    const token = await cognitoInitiateAuth(username, password);
+    const token = await backendLogin(username, password);
     setIdToken(token);
   }, []);
 
   const logout = useCallback(() => {
     setIdToken(null);
+    void backendLogout();
   }, []);
+
+  // On mount: an HttpOnly refresh-token cookie (if any) survives a page
+  // refresh — ask the backend to trade it for a fresh ID token.
+  useEffect(() => {
+    let cancelled = false;
+
+    backendRefresh()
+      .then((token) => {
+        if (!cancelled && token) setIdToken(token);
+      })
+      .finally(() => {
+        if (!cancelled) setIsRestoring(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Silently renew shortly before the current ID token expires. Re-fires on
+  // its own each time idToken changes, including after this same renewal.
+  useEffect(() => {
+    if (!idToken) return;
+
+    const { exp } = decodeClaims(idToken);
+    if (exp === null) return;
+
+    const delay = Math.max(exp * 1000 - Date.now() - REFRESH_SKEW_MS, 0);
+    const timer = setTimeout(async () => {
+      setIdToken(await backendRefresh());
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [idToken]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       idToken,
-      email: idToken ? decodeEmailForDisplay(idToken) : null,
+      email: idToken ? decodeClaims(idToken).email : null,
       isAuthenticated: idToken !== null,
+      isRestoring,
       login,
       logout,
     }),
-    [idToken, login, logout],
+    [idToken, isRestoring, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
