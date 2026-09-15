@@ -22,15 +22,18 @@ async def create_application(
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
-    application = service.create_application(
-        user_id=current_user.user_id,
-        company=payload.company,
-        role_title=payload.role_title,
-        job_url=str(payload.job_url) if payload.job_url else None,
-        location=payload.location,
-        salary_range=payload.salary_range,
-    )
-    return application
+    try:
+        return service.create_application(
+            user_id=current_user.user_id,
+            company=payload.company,
+            role_title=payload.role_title,
+            job_url=str(payload.job_url) if payload.job_url else None,
+            location=payload.location,
+            salary_range=payload.salary_range,
+            company_id=payload.company_id,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Company not found")
 
 
 @router.get("/{application_id}", response_model=ApplicationRead)
@@ -69,6 +72,21 @@ async def update_application(
             user_id=current_user.user_id,
             application_id=application_id,
             payload=payload,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+
+@router.delete("/{application_id}", status_code=204)
+async def delete_application(
+    application_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ApplicationService = Depends(get_application_service),
+) -> None:
+    try:
+        service.delete_application(
+            user_id=current_user.user_id,
+            application_id=application_id,
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")

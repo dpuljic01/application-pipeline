@@ -14,6 +14,21 @@ router = APIRouter(
 )
 
 
+@router.get("", response_model=list[ActivityRead])
+async def list_activities(
+    application_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ActivityService = Depends(get_activity_service),
+) -> list[Activity]:
+    try:
+        return service.list_activities(
+            user_id=current_user.user_id,
+            application_id=application_id,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+
 @router.post("", response_model=ActivityRead, status_code=201)
 async def create_activity(
     application_id: UUID,

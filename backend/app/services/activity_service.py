@@ -14,6 +14,23 @@ class ActivityService:
         self.application_repository = ApplicationRepository(db)
         self.activity_repository = ActivityRepository(db)
 
+    def list_activities(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+    ):
+        # Activity has no user_id of its own — ownership is only provable
+        # through the parent Application, same as log_activity below.
+        app = self.application_repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            raise NotFound("Application not found")
+
+        return self.activity_repository.list_for_application(application_id=app.id)
+
     def log_activity(
         self,
         *,

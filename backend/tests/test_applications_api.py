@@ -102,6 +102,20 @@ def test_stage_change_on_unknown_application_returns_404(client):
     assert response.status_code == 404
 
 
+def test_delete_application_succeeds(client):
+    created = _create_application(client)
+
+    response = client.delete(f"/api/applications/{created['id']}")
+    assert response.status_code == 204
+
+    assert client.get(f"/api/applications/{created['id']}").status_code == 404
+
+
+def test_delete_application_returns_404_for_unknown_id(client):
+    response = client.delete(f"/api/applications/{uuid.uuid4()}")
+    assert response.status_code == 404
+
+
 def test_user_cannot_see_another_users_application(client):
     created = _create_application(client)
 
