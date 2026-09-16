@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from pydantic import BaseModel
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -38,25 +39,31 @@ class GeminiProvider:
         model: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        response_schema: type[BaseModel] | None = None,
     ) -> LLMResponse:
         resolved_model = model or DEFAULT_MODEL
         started = time.monotonic()
+
+        config_kwargs: dict = {
+            "system_instruction": system_prompt,
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+            "thinking_config": types.ThinkingConfig(
+                thinking_level=types.ThinkingLevel.MINIMAL
+            ),
+            "automatic_function_calling": types.AutomaticFunctionCallingConfig(
+                disable=True
+            ),
+        }
+        if response_schema is not None:
+            config_kwargs["response_mime_type"] = "application/json"
+            config_kwargs["response_schema"] = response_schema
 
         try:
             response = self._client.models.generate_content(
                 model=resolved_model,
                 contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=temperature,
-                    max_output_tokens=max_tokens,
-                    thinking_config=types.ThinkingConfig(
-                        thinking_level=types.ThinkingLevel.MINIMAL
-                    ),
-                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                        disable=True
-                    ),
-                ),
+                config=types.GenerateContentConfig(**config_kwargs),
             )
         except genai_errors.APIError as exc:
             raise LLMProviderError(

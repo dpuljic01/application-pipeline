@@ -16,3 +16,7 @@ class InvalidTransition(DomainError):
 
 class CompanyHasApplications(DomainError):
     pass
+
+
+class JDParseError(DomainError):
+    pass

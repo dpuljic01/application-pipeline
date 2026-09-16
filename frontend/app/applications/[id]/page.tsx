@@ -5,14 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getApplication, listActivities, ApiError } from "@/lib/api";
-import type { Activity, Application } from "@/lib/types";
 import { StageBadge } from "@/components/stage-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AddActivityDialog } from "@/components/add-activity-dialog";
+import { JdParsePanel } from "@/components/jd-parse-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import type { Activity, Application, ParsedJobDescription } from "@/lib/types";
 
 function formatDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—";
@@ -66,6 +67,10 @@ export default function ApplicationDetailPage() {
 
   function handleActivityAdded(activity: Activity) {
     setActivities((prev) => [activity, ...prev]);
+  }
+
+  function handleParsed(parsed: ParsedJobDescription) {
+    setApplication((prev) => (prev ? { ...prev, parsed_jd: parsed } : prev));
   }
 
   if (isRestoring || !isAuthenticated) {
@@ -165,6 +170,18 @@ export default function ApplicationDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {idToken && (
+              <div className="mt-6">
+                <JdParsePanel
+                  applicationId={application.id}
+                  idToken={idToken}
+                  parsedJd={application.parsed_jd}
+                  onParsed={handleParsed}
+                  onUnauthorized={handleUnauthorized}
+                />
+              </div>
+            )}
 
             <div className="mt-6">
               <div className="mb-4 flex items-center justify-between">

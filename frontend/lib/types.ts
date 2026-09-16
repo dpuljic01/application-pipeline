@@ -26,6 +26,27 @@ export const ALLOWED_TRANSITIONS: Record<ApplicationStage, ApplicationStage[]> =
   GHOSTED: [],
 };
 
+// Mirrors backend/app/api/schemas/jd_parse.py — ParsedJobDescription
+export type Seniority = "junior" | "mid" | "senior" | "staff";
+export type SalaryConfidence = "stated" | "estimated" | "unknown";
+
+export interface ParsedJobDescription {
+  required_skills: string[];
+  nice_to_have_skills: string[];
+  seniority_claimed: string | null;
+  seniority_assessed: Seniority;
+  tech_stack: string[];
+  languages: string[];
+  years_experience_min: number | null;
+  remote_policy: string | null;
+  salary_range: string | null;
+  salary_confidence: SalaryConfidence;
+  key_responsibilities: string[];
+  red_flags: string[];
+  missing_info: string[];
+  summary: string;
+}
+
 export interface Application {
   id: string;
   company: string;
@@ -39,6 +60,7 @@ export interface Application {
   updated_at: string;
   last_activity_at: string | null;
   stage_changed_at: string | null;
+  parsed_jd: ParsedJobDescription | null;
 }
 
 export interface ApplicationCreateInput {

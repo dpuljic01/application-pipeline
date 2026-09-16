@@ -2,7 +2,7 @@ from datetime import datetime
 
 from uuid import UUID as PyUUID
 from sqlalchemy import String, DateTime, Enum, ForeignKey, Index, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -44,6 +44,11 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     stage_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Cached result of the last successful LLM extraction (Day 9). A display
+    # artifact of one call, not queried by individual field — JSONB rather
+    # than 14 typed columns.
+    parsed_jd: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     user = relationship("User", back_populates="applications")
     # Named `linked_company`, not `company` — that name is already the

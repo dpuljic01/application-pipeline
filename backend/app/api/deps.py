@@ -2,9 +2,15 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.integrations.llm.base import LLMProvider
+from app.integrations.llm.factory import get_llm_provider as _get_llm_provider
 from app.services.application_service import ApplicationService
 from app.services.activity_service import ActivityService
 from app.services.company_service import CompanyService
+
+
+def get_llm_provider() -> LLMProvider:
+    return _get_llm_provider()
 
 
 def get_application_service(

@@ -1,16 +1,18 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_application_service
+from app.api.deps import get_application_service, get_llm_provider
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
     ApplicationUpdate,
     StageChangeRequest,
 )
+from app.api.schemas.jd_parse import ParseJDRequest, ParsedJobDescription
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
-from app.domain.errors import InvalidTransition, NotFound
+from app.domain.errors import InvalidTransition, JDParseError, NotFound
+from app.integrations.llm.base import LLMProvider
 from app.services.application_service import ApplicationService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
@@ -90,6 +92,27 @@ async def delete_application(
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")
+
+
+@router.post("/{application_id}/parse-jd", response_model=ParsedJobDescription)
+async def parse_jd(
+    application_id: UUID,
+    payload: ParseJDRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ApplicationService = Depends(get_application_service),
+    llm: LLMProvider = Depends(get_llm_provider),
+) -> ParsedJobDescription:
+    try:
+        return service.parse_jd(
+            user_id=current_user.user_id,
+            application_id=application_id,
+            llm=llm,
+            jd_text=payload.jd_text,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
+    except JDParseError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 @router.patch("/{application_id}/stage", response_model=ApplicationRead)

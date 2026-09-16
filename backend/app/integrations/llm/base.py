@@ -28,6 +28,7 @@ class LLMProvider(Protocol):
         model: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        response_schema: type[BaseModel] | None = None,
     ) -> LLMResponse: ...
 
 
@@ -52,6 +53,7 @@ class DisabledLLMProvider:
         model: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 1024,
+        response_schema: type[BaseModel] | None = None,
     ) -> LLMResponse:
         return LLMResponse(
             content="",

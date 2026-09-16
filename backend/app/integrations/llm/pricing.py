@@ -15,6 +15,14 @@ PRICING: dict[tuple[str, str], tuple[Decimal, Decimal]] = {
     ("cerebras", "gpt-oss-120b"): (Decimal("0.35"), Decimal("0.75")),
 }
 
+# Anthropic prompt-caching multipliers on the base input price, 5-minute TTL
+# (the default we use — see anthropic_provider.py). Writing to the cache
+# costs *more* than a normal input token; reading from it costs far less.
+# Not verifiable by calling the SDK like the request/response shapes were —
+# check console.anthropic.com/docs if these ever look off.
+CACHE_WRITE_MULTIPLIER = Decimal("1.25")
+CACHE_READ_MULTIPLIER = Decimal("0.10")
+
 
 def calculate_cost(
     *,
@@ -22,11 +30,16 @@ def calculate_cost(
     model: str,
     prompt_tokens: int,
     completion_tokens: int,
+    cache_write_tokens: int = 0,
+    cache_read_tokens: int = 0,
 ) -> Decimal:
     input_price, output_price = PRICING.get(
         (provider, model), (Decimal("0"), Decimal("0"))
     )
     cost = (
-        Decimal(prompt_tokens) * input_price + Decimal(completion_tokens) * output_price
+        Decimal(prompt_tokens) * input_price
+        + Decimal(completion_tokens) * output_price
+        + Decimal(cache_write_tokens) * input_price * CACHE_WRITE_MULTIPLIER
+        + Decimal(cache_read_tokens) * input_price * CACHE_READ_MULTIPLIER
     ) / Decimal(1_000_000)
     return cost.quantize(Decimal("0.000001"))

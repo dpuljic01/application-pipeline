@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, AnyHttpUrl, Field, ConfigDict
 
+from app.api.schemas.jd_parse import ParsedJobDescription
 from app.domain.enums import ApplicationStage
 
 
@@ -45,3 +46,4 @@ class ApplicationRead(BaseModel):
     updated_at: datetime
     last_activity_at: datetime | None
     stage_changed_at: datetime | None
+    parsed_jd: ParsedJobDescription | None

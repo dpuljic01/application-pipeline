@@ -5,6 +5,7 @@ import type {
   ApplicationCreateInput,
   ApplicationStage,
   ApplicationUpdateInput,
+  ParsedJobDescription,
 } from "@/lib/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
@@ -100,6 +101,17 @@ export function deleteApplication(
 ): Promise<void> {
   return request<void>(`/applications/${applicationId}`, token, {
     method: "DELETE",
+  });
+}
+
+export function parseJd(
+  token: string,
+  applicationId: string,
+  jdText: string,
+): Promise<ParsedJobDescription> {
+  return request<ParsedJobDescription>(`/applications/${applicationId}/parse-jd`, token, {
+    method: "POST",
+    body: JSON.stringify({ jd_text: jdText }),
   });
 }
 

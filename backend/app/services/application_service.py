@@ -2,11 +2,14 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.api.schemas.application import ApplicationUpdate
+from app.api.schemas.jd_parse import ParsedJobDescription
 from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
 from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
 from app.domain.errors import InvalidTransition, NotFound
+from app.integrations.llm.base import LLMProvider
+from app.services.jd_parser import parse_job_description
 
 
 class ApplicationService:
@@ -118,6 +121,32 @@ class ApplicationService:
 
         self.repository.delete(application=app)
         self.db.commit()
+
+    def parse_jd(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+        llm: LLMProvider,
+        jd_text: str,
+    ) -> ParsedJobDescription:
+        app = self.repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            raise NotFound("Application not found")
+
+        # JDParseError propagates as-is — the route maps it to an HTTP error.
+        parsed = parse_job_description(llm, jd_text)
+
+        self.repository.update(
+            application=app,
+            data={"parsed_jd": parsed.model_dump(mode="json")},
+        )
+        self.db.commit()
+        self.db.refresh(app)
+        return parsed
 
     def change_stage(
         self,
