@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StageBadge } from "@/components/stage-badge";
+import { scoreColor } from "@/lib/jd-score";
 import type { Application } from "@/lib/types";
 
 // Mobile equivalent of a table row: minimal on purpose — company, role,
@@ -15,7 +16,17 @@ export function ApplicationCard({ application }: { application: Application }) {
         <p className="truncate font-medium">{application.company}</p>
         <p className="truncate text-sm text-muted-foreground">{application.role_title}</p>
       </div>
-      <StageBadge stage={application.stage} />
+      <div className="flex items-center gap-2">
+        {application.match_score !== null && (
+          <span
+            className="font-mono text-xs tabular-nums"
+            style={{ color: scoreColor(application.match_score) }}
+          >
+            {application.match_score}
+          </span>
+        )}
+        <StageBadge stage={application.stage} />
+      </div>
     </Link>
   );
 }

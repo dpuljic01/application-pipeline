@@ -47,6 +47,28 @@ export interface ParsedJobDescription {
   summary: string;
 }
 
+// Mirrors backend/app/api/schemas/match.py — MatchInsights, and the
+// match_details dict shape assembled by backend/app/services/matcher.py.
+export interface MatchInsights {
+  fit_narrative: string;
+  key_strengths: string[];
+  gaps: string[];
+  talking_points: string[];
+}
+
+export interface MatchComponentScore {
+  score: number;
+  max: number;
+  [key: string]: unknown;
+}
+
+export interface MatchDetails {
+  rule_score: number;
+  components: Record<string, MatchComponentScore>;
+  insights: MatchInsights;
+  scored_at: string;
+}
+
 export interface Application {
   id: string;
   company: string;
@@ -61,6 +83,8 @@ export interface Application {
   last_activity_at: string | null;
   stage_changed_at: string | null;
   parsed_jd: ParsedJobDescription | null;
+  match_score: number | null;
+  match_details: MatchDetails | null;
 }
 
 export interface ApplicationCreateInput {
@@ -114,4 +138,31 @@ export interface ActivityCreateInput {
   activity_type: ActivityType;
   note?: string | null;
   occurred_at?: string | null;
+}
+
+// Mirrors backend/app/api/schemas/profile.py
+export interface LanguageEntry {
+  language: string;
+  level: string;
+}
+
+export interface Profile {
+  id: string;
+  years_experience: number | null;
+  skills: string[];
+  languages: LanguageEntry[];
+  target_seniorities: Seniority[];
+  min_salary_chf: number | null;
+  ideal_salary_chf: number | null;
+  home_location: string | null;
+}
+
+export interface ProfileUpdateInput {
+  years_experience?: number | null;
+  skills?: string[];
+  languages?: LanguageEntry[];
+  target_seniorities?: Seniority[];
+  min_salary_chf?: number | null;
+  ideal_salary_chf?: number | null;
+  home_location?: string | null;
 }

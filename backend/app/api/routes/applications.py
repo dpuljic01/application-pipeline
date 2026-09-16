@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_application_service, get_llm_provider
+from app.api.deps import get_application_service, get_llm_provider, get_profile_service
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
@@ -11,9 +11,16 @@ from app.api.schemas.application import (
 from app.api.schemas.jd_parse import ParseJDRequest, ParsedJobDescription
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
-from app.domain.errors import InvalidTransition, JDParseError, NotFound
+from app.domain.errors import (
+    InvalidTransition,
+    JDNotParsed,
+    JDParseError,
+    MatchingError,
+    NotFound,
+)
 from app.integrations.llm.base import LLMProvider
 from app.services.application_service import ApplicationService
+from app.services.profile_service import ProfileService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -112,6 +119,32 @@ async def parse_jd(
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")
     except JDParseError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.post("/{application_id}/score", response_model=ApplicationRead)
+async def score_application(
+    application_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ApplicationService = Depends(get_application_service),
+    profile_service: ProfileService = Depends(get_profile_service),
+    llm: LLMProvider = Depends(get_llm_provider),
+) -> Application:
+    profile = profile_service.get_or_create_profile_for_user(
+        user_id=current_user.user_id
+    )
+    try:
+        return service.score_application(
+            user_id=current_user.user_id,
+            application_id=application_id,
+            llm=llm,
+            profile=profile,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
+    except JDNotParsed as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except MatchingError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 

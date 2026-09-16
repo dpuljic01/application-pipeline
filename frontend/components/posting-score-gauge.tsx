@@ -1,12 +1,20 @@
-import { postingScoreColor } from "@/lib/jd-score";
+import { scoreColor } from "@/lib/jd-score";
 
 const SIZE = 96;
 const STROKE = 8;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function PostingScoreGauge({ score, label }: { score: number; label: string }) {
-  const color = postingScoreColor(score);
+export function PostingScoreGauge({
+  score,
+  label,
+  caption,
+}: {
+  score: number;
+  label: string;
+  caption?: string;
+}) {
+  const color = scoreColor(score);
   const offset = CIRCUMFERENCE * (1 - score / 100);
 
   return (
@@ -53,8 +61,9 @@ export function PostingScoreGauge({ score, label }: { score: number; label: stri
       </svg>
       <div>
         <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">Based on red flags,</p>
-        <p className="text-xs text-muted-foreground">missing info, and salary clarity</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {caption ?? "Based on red flags, missing info, and salary clarity"}
+        </p>
       </div>
     </div>
   );

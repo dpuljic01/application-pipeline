@@ -15,6 +15,7 @@ import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import { DeleteApplicationDialog } from "@/components/delete-application-dialog";
 import { ApplicationCard } from "@/components/application-card";
+import { scoreColor } from "@/lib/jd-score";
 import type { Application } from "@/lib/types";
 
 function formatDate(iso: string | null): string {
@@ -69,6 +70,9 @@ export function ApplicationsTable({
               Stage
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground">
+              Match
+            </TableHead>
+            <TableHead className="text-xs font-medium text-muted-foreground">
               Location
             </TableHead>
             <TableHead className="text-xs font-medium text-muted-foreground">
@@ -104,6 +108,15 @@ export function ApplicationsTable({
               </TableCell>
               <TableCell className="py-4">
                 <StageBadge stage={application.stage} />
+              </TableCell>
+              <TableCell className="py-4 font-mono text-xs tabular-nums">
+                {application.match_score !== null ? (
+                  <span style={{ color: scoreColor(application.match_score) }}>
+                    {application.match_score}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </TableCell>
               <TableCell
                 className="max-w-[160px] truncate py-4 text-muted-foreground"

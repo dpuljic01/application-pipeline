@@ -7,6 +7,7 @@ from app.integrations.llm.factory import get_llm_provider as _get_llm_provider
 from app.services.application_service import ApplicationService
 from app.services.activity_service import ActivityService
 from app.services.company_service import CompanyService
+from app.services.profile_service import ProfileService
 
 
 def get_llm_provider() -> LLMProvider:
@@ -29,3 +30,9 @@ def get_company_service(
     db: Session = Depends(get_db),
 ) -> CompanyService:
     return CompanyService(db)
+
+
+def get_profile_service(
+    db: Session = Depends(get_db),
+) -> ProfileService:
+    return ProfileService(db)

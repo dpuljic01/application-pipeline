@@ -11,6 +11,7 @@ import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import { ActivityTimeline } from "@/components/activity-timeline";
 import { AddActivityDialog } from "@/components/add-activity-dialog";
 import { JdParsePanel } from "@/components/jd-parse-panel";
+import { MatchScorePanel } from "@/components/match-score-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import type { Activity, Application, ParsedJobDescription } from "@/lib/types";
@@ -178,6 +179,17 @@ export default function ApplicationDetailPage() {
                   idToken={idToken}
                   parsedJd={application.parsed_jd}
                   onParsed={handleParsed}
+                  onUnauthorized={handleUnauthorized}
+                />
+              </div>
+            )}
+
+            {idToken && (
+              <div className="mt-6">
+                <MatchScorePanel
+                  application={application}
+                  idToken={idToken}
+                  onScored={handleChanged}
                   onUnauthorized={handleUnauthorized}
                 />
               </div>

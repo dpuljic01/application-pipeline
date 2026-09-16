@@ -20,3 +20,11 @@ class CompanyHasApplications(DomainError):
 
 class JDParseError(DomainError):
     pass
+
+
+class JDNotParsed(DomainError):
+    pass
+
+
+class MatchingError(DomainError):
+    pass

@@ -47,3 +47,5 @@ class ApplicationRead(BaseModel):
     last_activity_at: datetime | None
     stage_changed_at: datetime | None
     parsed_jd: ParsedJobDescription | None
+    match_score: int | None
+    match_details: dict | None

@@ -12,6 +12,7 @@ import { StageBreakdown } from "@/components/stage-breakdown";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Select,
   SelectContent,
@@ -91,9 +92,16 @@ export default function DashboardPage() {
             </p>
             {email && <p className="mt-0.5 text-xs text-muted-foreground">{email}</p>}
           </div>
-          <Button variant="ghost" size="sm" onClick={handleUnauthorized}>
-            Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/profile">
+              <Button variant="ghost" size="sm">
+                Profile
+              </Button>
+            </Link>
+            <Button variant="ghost" size="sm" onClick={handleUnauthorized}>
+              Sign out
+            </Button>
+          </div>
         </div>
       </header>
 

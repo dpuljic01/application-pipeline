@@ -12,7 +12,7 @@ export function postingQualityScore(parsed: ParsedJobDescription): number {
   return Math.max(0, Math.min(100, score));
 }
 
-export function postingScoreColor(score: number): string {
+export function scoreColor(score: number): string {
   if (score >= 70) return "var(--stage-win)";
   if (score >= 40) return "var(--primary)";
   return "var(--destructive)";

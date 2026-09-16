@@ -3,13 +3,16 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas.application import ApplicationUpdate
 from app.api.schemas.jd_parse import ParsedJobDescription
+from app.db.models.application import Application
+from app.db.models.profile import Profile
 from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
 from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
-from app.domain.errors import InvalidTransition, NotFound
+from app.domain.errors import InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
 from app.services.jd_parser import parse_job_description
+from app.services.matcher import score_application_match
 
 
 class ApplicationService:
@@ -147,6 +150,43 @@ class ApplicationService:
         self.db.commit()
         self.db.refresh(app)
         return parsed
+
+    def score_application(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+        llm: LLMProvider,
+        profile: Profile,
+    ) -> Application:
+        app = self.repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            raise NotFound("Application not found")
+        if app.parsed_jd is None:
+            raise JDNotParsed("Parse the job description before scoring")
+
+        parsed_jd = ParsedJobDescription.model_validate(app.parsed_jd)
+        # MatchingError propagates as-is - the route maps it to an HTTP error.
+        result = score_application_match(
+            llm,
+            profile=profile,
+            parsed_jd=parsed_jd,
+            application_location=app.location,
+        )
+
+        self.repository.update(
+            application=app,
+            data={
+                "match_score": result["rule_score"],
+                "match_details": result,
+            },
+        )
+        self.db.commit()
+        self.db.refresh(app)
+        return app
 
     def change_stage(
         self,

@@ -6,6 +6,8 @@ import type {
   ApplicationStage,
   ApplicationUpdateInput,
   ParsedJobDescription,
+  Profile,
+  ProfileUpdateInput,
 } from "@/lib/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
@@ -112,6 +114,29 @@ export function parseJd(
   return request<ParsedJobDescription>(`/applications/${applicationId}/parse-jd`, token, {
     method: "POST",
     body: JSON.stringify({ jd_text: jdText }),
+  });
+}
+
+export function scoreApplication(
+  token: string,
+  applicationId: string,
+): Promise<Application> {
+  return request<Application>(`/applications/${applicationId}/score`, token, {
+    method: "POST",
+  });
+}
+
+export function getProfile(token: string): Promise<Profile> {
+  return request<Profile>("/profile", token);
+}
+
+export function updateProfile(
+  token: string,
+  input: ProfileUpdateInput,
+): Promise<Profile> {
+  return request<Profile>("/profile", token, {
+    method: "PUT",
+    body: JSON.stringify(input),
   });
 }
 

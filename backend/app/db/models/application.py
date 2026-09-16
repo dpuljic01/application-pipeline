@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from uuid import UUID as PyUUID
-from sqlalchemy import String, DateTime, Enum, ForeignKey, Index, text
+from sqlalchemy import Integer, String, DateTime, Enum, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,6 +49,13 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # artifact of one call, not queried by individual field — JSONB rather
     # than 14 typed columns.
     parsed_jd: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    # Result of the last successful match-scoring run (Day 10) against the
+    # user's Profile. match_score is rule-based only (deterministic); the
+    # LLM-generated qualitative read lives inside match_details, never
+    # changes the number - see services/matcher.py.
+    match_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    match_details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     user = relationship("User", back_populates="applications")
     # Named `linked_company`, not `company` — that name is already the
