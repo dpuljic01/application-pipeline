@@ -90,14 +90,25 @@ export function ApplicationsTable({
               onClick={() => router.push(`/applications/${application.id}`)}
               className="cursor-pointer"
             >
-              <TableCell className="py-4 font-medium">{application.company}</TableCell>
-              <TableCell className="py-4 text-muted-foreground">
+              <TableCell
+                className="max-w-[160px] truncate py-4 font-medium"
+                title={application.company}
+              >
+                {application.company}
+              </TableCell>
+              <TableCell
+                className="max-w-[200px] truncate py-4 text-muted-foreground"
+                title={application.role_title}
+              >
                 {application.role_title}
               </TableCell>
               <TableCell className="py-4">
                 <StageBadge stage={application.stage} />
               </TableCell>
-              <TableCell className="py-4 text-muted-foreground">
+              <TableCell
+                className="max-w-[160px] truncate py-4 text-muted-foreground"
+                title={application.location ?? undefined}
+              >
                 {application.location ?? "—"}
               </TableCell>
               <TableCell className="py-4 font-mono text-xs text-muted-foreground tabular-nums">
