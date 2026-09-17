@@ -8,6 +8,9 @@ from decimal import Decimal
 PRICING: dict[tuple[str, str], tuple[Decimal, Decimal]] = {
     # TODO: promotional rate expires 2027-01-01, then $1.50 / $7.50.
     ("gemini", "gemini-3.6-flash"): (Decimal("0.75"), Decimal("3.75")),
+    # Fallback tier when 3.6 Flash's free-tier quota is exhausted - see
+    # gemini_provider.py.
+    ("gemini", "gemini-3.1-flash-lite"): (Decimal("0.25"), Decimal("1.50")),
     ("anthropic", "claude-haiku-4-5-20251001"): (Decimal("1.00"), Decimal("5.00")),
     # Free while under the account's free-tier daily/rate quota — cost_tracker
     # still records this rate so a call that spills over into paid usage

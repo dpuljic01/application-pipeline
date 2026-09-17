@@ -4,12 +4,37 @@ from decimal import Decimal
 
 import pytest
 
+from google.genai import errors as genai_errors
+
 from app.integrations.llm.anthropic_provider import AnthropicProvider
 from app.integrations.llm.base import DisabledLLMProvider, LLMProviderError
 from app.integrations.llm.cerebras_provider import CerebrasProvider
 from app.integrations.llm.factory import get_llm_provider
-from app.integrations.llm.gemini_provider import GeminiProvider
+from app.integrations.llm.gemini_provider import (
+    DEFAULT_MODEL,
+    FALLBACK_MODEL,
+    GeminiProvider,
+)
 from app.integrations.llm.pricing import calculate_cost
+
+
+class _FakeUsage:
+    def __init__(self):
+        self.prompt_token_count = 10
+        self.candidates_token_count = 5
+        self.total_token_count = 15
+
+
+class _FakeResponse:
+    def __init__(self, text: str = "ok"):
+        self.text = text
+        self.usage_metadata = _FakeUsage()
+
+
+def _rate_limit_error() -> genai_errors.APIError:
+    return genai_errors.APIError(
+        429, {"error": {"message": "quota exceeded", "status": "RESOURCE_EXHAUSTED"}}
+    )
 
 
 def test_disabled_provider_returns_placeholder_with_zero_cost():
@@ -113,3 +138,70 @@ def test_factory_raises_on_unknown_provider(monkeypatch):
 
     with pytest.raises(LLMProviderError):
         get_llm_provider()
+
+
+def test_gemini_falls_back_to_flash_lite_on_rate_limit(monkeypatch):
+    provider = GeminiProvider(api_key="test-key")
+    calls: list[str] = []
+
+    def fake_generate_content(*, model, contents, config):
+        calls.append(model)
+        if model == DEFAULT_MODEL:
+            raise _rate_limit_error()
+        return _FakeResponse()
+
+    monkeypatch.setattr(
+        provider._client.models, "generate_content", fake_generate_content
+    )
+
+    response = provider.complete(system_prompt="sys", user_prompt="hi")
+
+    assert calls == [DEFAULT_MODEL, FALLBACK_MODEL]
+    assert response.model == FALLBACK_MODEL
+    assert response.content == "ok"
+
+
+def test_gemini_does_not_fall_back_for_non_rate_limit_error(monkeypatch):
+    provider = GeminiProvider(api_key="test-key")
+
+    def fake_generate_content(*, model, contents, config):
+        raise genai_errors.APIError(
+            500, {"error": {"message": "server error", "status": "INTERNAL"}}
+        )
+
+    monkeypatch.setattr(
+        provider._client.models, "generate_content", fake_generate_content
+    )
+
+    with pytest.raises(LLMProviderError):
+        provider.complete(system_prompt="sys", user_prompt="hi")
+
+
+def test_gemini_does_not_fall_back_for_explicit_model(monkeypatch):
+    provider = GeminiProvider(api_key="test-key")
+    calls: list[str] = []
+
+    def fake_generate_content(*, model, contents, config):
+        calls.append(model)
+        raise _rate_limit_error()
+
+    monkeypatch.setattr(
+        provider._client.models, "generate_content", fake_generate_content
+    )
+
+    explicit_model = DEFAULT_MODEL + "-explicit"
+    with pytest.raises(LLMProviderError):
+        provider.complete(system_prompt="sys", user_prompt="hi", model=explicit_model)
+
+    assert calls == [explicit_model]
+
+
+def test_calculate_cost_gemini_flash_lite_known_model():
+    cost = calculate_cost(
+        provider="gemini",
+        model=FALLBACK_MODEL,
+        prompt_tokens=1_000_000,
+        completion_tokens=1_000_000,
+    )
+
+    assert cost == Decimal("0.25") + Decimal("1.50")
