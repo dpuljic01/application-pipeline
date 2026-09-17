@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ export function TagInput({
   placeholder?: string;
 }) {
   const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function commitDraft() {
     const tag = draft.trim();
@@ -28,6 +29,10 @@ export function TagInput({
     if (event.key === "Enter" || event.key === ",") {
       event.preventDefault();
       commitDraft();
+      // Mobile keyboards often show "Next" and jump focus to the next form
+      // field on Enter, unlike desktop's plain keydown - force focus back
+      // so typing another tag works the same way on both.
+      requestAnimationFrame(() => inputRef.current?.focus());
     } else if (event.key === "Backspace" && draft === "" && value.length > 0) {
       onChange(value.slice(0, -1));
     }
@@ -56,10 +61,12 @@ export function TagInput({
         </span>
       ))}
       <Input
+        ref={inputRef}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={commitDraft}
+        enterKeyHint="enter"
         placeholder={value.length === 0 ? placeholder : undefined}
         className="h-6 w-auto min-w-[100px] flex-1 border-none px-1 shadow-none focus-visible:ring-0"
       />

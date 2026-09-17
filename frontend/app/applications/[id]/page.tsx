@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getApplication, listActivities, ApiError } from "@/lib/api";
+import { AppHeader } from "@/components/app-header";
 import { StageBadge } from "@/components/stage-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
@@ -14,7 +15,6 @@ import { JdParsePanel } from "@/components/jd-parse-panel";
 import { MatchScorePanel } from "@/components/match-score-panel";
 import { FollowUpPanel } from "@/components/follow-up-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
 import type { Activity, Application, ParsedJobDescription } from "@/lib/types";
 
 function formatDate(iso: string | null): string {
@@ -24,7 +24,7 @@ function formatDate(iso: string | null): string {
 export default function ApplicationDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { idToken, isAuthenticated, isRestoring, logout } = useAuth();
+  const { idToken, email, isAuthenticated, isRestoring, logout } = useAuth();
 
   const [application, setApplication] = useState<Application | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -91,19 +91,13 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to applications
-          </Link>
-        </div>
-      </header>
+      <AppHeader
+        email={email}
+        onSignOut={handleUnauthorized}
+        back={{ href: "/", label: "Back to applications" }}
+      />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {loading ? (
           <p className="text-xs text-muted-foreground">Loading…</p>
         ) : notFound || !application ? (

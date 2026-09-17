@@ -10,9 +10,8 @@ import { ApplicationsTable } from "@/components/applications-table";
 import { StatsRow } from "@/components/stats-row";
 import { StageBreakdown } from "@/components/stage-breakdown";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
-import { Button } from "@/components/ui/button";
+import { AppHeader } from "@/components/app-header";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
 import {
   Select,
   SelectContent,
@@ -138,28 +137,9 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
-              Job Dossier
-            </p>
-            {email && <p className="mt-0.5 text-xs text-muted-foreground">{email}</p>}
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/profile">
-              <Button variant="ghost" size="sm">
-                Profile
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm" onClick={handleUnauthorized}>
-              Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AppHeader email={email} onSignOut={handleUnauthorized} />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
         <StatsRow applications={applications} />
         <div className="mb-5">
           <StageBreakdown applications={applications} />

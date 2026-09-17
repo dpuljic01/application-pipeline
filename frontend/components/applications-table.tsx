@@ -148,13 +148,13 @@ export function ApplicationsTable({
               className="cursor-pointer"
             >
               <TableCell
-                className="max-w-[160px] truncate py-4 font-medium"
+                className="max-w-[140px] truncate py-4 font-medium"
                 title={application.company}
               >
                 {application.company}
               </TableCell>
               <TableCell
-                className="max-w-[200px] truncate py-4 text-muted-foreground"
+                className="max-w-[170px] truncate py-4 text-muted-foreground"
                 title={application.role_title}
               >
                 {application.role_title}
@@ -175,7 +175,7 @@ export function ApplicationsTable({
                 )}
               </TableCell>
               <TableCell
-                className="max-w-[160px] truncate py-4 text-muted-foreground"
+                className="max-w-[130px] truncate py-4 text-muted-foreground"
                 title={application.location ?? undefined}
               >
                 {application.location ?? "—"}

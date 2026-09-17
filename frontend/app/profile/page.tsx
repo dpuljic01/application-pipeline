@@ -3,15 +3,22 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X } from "lucide-react";
-import Link from "next/link";
+import { Plus, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getProfile, updateProfile, ApiError } from "@/lib/api";
 import type { LanguageEntry, Profile, Seniority } from "@/lib/types";
+import { AppHeader } from "@/components/app-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TagInput } from "@/components/ui/tag-input";
 
 const SENIORITY_OPTIONS: { value: Seniority; label: string }[] = [
@@ -21,9 +28,22 @@ const SENIORITY_OPTIONS: { value: Seniority; label: string }[] = [
   { value: "staff", label: "Staff" },
 ];
 
+// Mixes both conventions people actually use for this ("native"/"fluent"
+// vs. a CEFR level) rather than forcing everything into one system.
+const LANGUAGE_LEVELS = [
+  "Native",
+  "Fluent (C2)",
+  "Advanced (C1)",
+  "Upper-Intermediate (B2)",
+  "Intermediate (B1)",
+  "Elementary (A2)",
+  "Beginner (A1)",
+];
+const OTHER_LEVEL = "__other__";
+
 export default function ProfilePage() {
   const router = useRouter();
-  const { idToken, isAuthenticated, isRestoring, logout } = useAuth();
+  const { idToken, email, isAuthenticated, isRestoring, logout } = useAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +58,10 @@ export default function ProfilePage() {
   const [minSalary, setMinSalary] = useState("");
   const [idealSalary, setIdealSalary] = useState("");
   const [homeLocation, setHomeLocation] = useState("");
+  // Rows where the level dropdown is set to "Other" - tracked separately
+  // from the level value itself, since selecting "Other" before typing
+  // anything would otherwise be indistinguishable from "nothing chosen".
+  const [customLevelRows, setCustomLevelRows] = useState<Set<number>>(new Set());
 
   function handleUnauthorized() {
     logout();
@@ -92,6 +116,27 @@ export default function ProfilePage() {
 
   function removeLanguage(index: number) {
     setLanguages((prev) => prev.filter((_, i) => i !== index));
+    setCustomLevelRows((prev) => {
+      const next = new Set<number>();
+      for (const i of prev) {
+        if (i < index) next.add(i);
+        else if (i > index) next.add(i - 1);
+      }
+      return next;
+    });
+  }
+
+  function selectLevel(index: number, value: string) {
+    if (value === OTHER_LEVEL) {
+      setCustomLevelRows((prev) => new Set(prev).add(index));
+    } else {
+      setCustomLevelRows((prev) => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
+      updateLanguage(index, "level", value);
+    }
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -133,19 +178,13 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to applications
-          </Link>
-        </div>
-      </header>
+      <AppHeader
+        email={email}
+        onSignOut={handleUnauthorized}
+        back={{ href: "/", label: "Back to applications" }}
+      />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">
         {loading ? (
           <p className="text-xs text-muted-foreground">Loading…</p>
         ) : (
@@ -192,31 +231,58 @@ export default function ProfilePage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Languages</Label>
                   <div className="space-y-2">
-                    {languages.map((entry, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          value={entry.language}
-                          onChange={(e) => updateLanguage(index, "language", e.target.value)}
-                          placeholder="Language"
-                          className="flex-1"
-                        />
-                        <Input
-                          value={entry.level}
-                          onChange={(e) => updateLanguage(index, "level", e.target.value)}
-                          placeholder="Level (e.g. B1, fluent)"
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => removeLanguage(index)}
-                          aria-label="Remove language"
-                        >
-                          <X className="size-3.5" />
-                        </Button>
-                      </div>
-                    ))}
+                    {languages.map((entry, index) => {
+                      const isCustomLevel =
+                        customLevelRows.has(index) ||
+                        (entry.level !== "" && !LANGUAGE_LEVELS.includes(entry.level));
+                      return (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            value={entry.language}
+                            onChange={(e) =>
+                              updateLanguage(index, "language", e.target.value)
+                            }
+                            placeholder="Language"
+                            className="flex-1"
+                          />
+                          <Select
+                            value={isCustomLevel ? OTHER_LEVEL : entry.level}
+                            onValueChange={(value) => selectLevel(index, value ?? "")}
+                          >
+                            <SelectTrigger className="w-44">
+                              <SelectValue placeholder="Level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {LANGUAGE_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {level}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value={OTHER_LEVEL}>Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {isCustomLevel && (
+                            <Input
+                              value={entry.level}
+                              onChange={(e) =>
+                                updateLanguage(index, "level", e.target.value)
+                              }
+                              placeholder="Custom level"
+                              className="flex-1"
+                            />
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => removeLanguage(index)}
+                            aria-label="Remove language"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                     <Button
                       type="button"
                       variant="outline"
@@ -290,7 +356,7 @@ export default function ProfilePage() {
                     id="home_location"
                     value={homeLocation}
                     onChange={(e) => setHomeLocation(e.target.value)}
-                    placeholder="e.g. Thalwil, Switzerland"
+                    placeholder="e.g. Zurich, Switzerland"
                   />
                   <p className="text-xs text-muted-foreground">
                     Only used to let the AI flag onsite commute concerns in a
