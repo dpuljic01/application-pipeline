@@ -9,17 +9,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, ExternalLink } from "lucide-react";
 import { StageBadge } from "@/components/stage-badge";
+import { FollowUpBadge } from "@/components/follow-up-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
 import { DeleteApplicationDialog } from "@/components/delete-application-dialog";
 import { ApplicationCard } from "@/components/application-card";
 import { scoreColor } from "@/lib/jd-score";
+import { needsFollowUp } from "@/lib/followup";
 import type { Application } from "@/lib/types";
+import type { SortDirection, SortField } from "@/app/page";
 
 function formatDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : "—";
+}
+
+function SortableTableHead({
+  label,
+  field,
+  sortField,
+  sortDirection,
+  onSort,
+}: {
+  label: string;
+  field: SortField;
+  sortField: SortField | null;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
+}) {
+  const active = field === sortField;
+  return (
+    <TableHead className="text-xs font-medium text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="inline-flex items-center gap-1 hover:text-foreground"
+      >
+        {label}
+        {active ? (
+          sortDirection === "asc" ? (
+            <ArrowUp className="size-3" />
+          ) : (
+            <ArrowDown className="size-3" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3 opacity-30" />
+        )}
+      </button>
+    </TableHead>
+  );
 }
 
 export function ApplicationsTable({
@@ -27,11 +66,17 @@ export function ApplicationsTable({
   onChanged,
   onDeleted,
   onUnauthorized,
+  sortField,
+  sortDirection,
+  onSort,
 }: {
   applications: Application[];
   onChanged: (updated: Application) => void;
   onDeleted: (applicationId: string) => void;
   onUnauthorized: () => void;
+  sortField: SortField | null;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }) {
   const router = useRouter();
 
@@ -69,15 +114,23 @@ export function ApplicationsTable({
             <TableHead className="text-xs font-medium text-muted-foreground">
               Stage
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">
-              Match
-            </TableHead>
+            <SortableTableHead
+              label="Match"
+              field="match_score"
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={onSort}
+            />
             <TableHead className="text-xs font-medium text-muted-foreground">
               Location
             </TableHead>
-            <TableHead className="text-xs font-medium text-muted-foreground">
-              Stage since
-            </TableHead>
+            <SortableTableHead
+              label="Stage since"
+              field="stage_changed_at"
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={onSort}
+            />
             <TableHead className="text-xs font-medium text-muted-foreground">
               Job Posting
             </TableHead>
@@ -107,7 +160,10 @@ export function ApplicationsTable({
                 {application.role_title}
               </TableCell>
               <TableCell className="py-4">
-                <StageBadge stage={application.stage} />
+                <div className="flex items-center gap-1.5">
+                  <StageBadge stage={application.stage} />
+                  {needsFollowUp(application) && <FollowUpBadge />}
+                </div>
               </TableCell>
               <TableCell className="py-4 font-mono text-xs tabular-nums">
                 {application.match_score !== null ? (

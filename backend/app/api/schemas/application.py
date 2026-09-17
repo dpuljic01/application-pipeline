@@ -49,3 +49,4 @@ class ApplicationRead(BaseModel):
     parsed_jd: ParsedJobDescription | None
     match_score: int | None
     match_details: dict | None
+    generated_followup: dict | None

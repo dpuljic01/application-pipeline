@@ -12,6 +12,7 @@ import { ActivityTimeline } from "@/components/activity-timeline";
 import { AddActivityDialog } from "@/components/add-activity-dialog";
 import { JdParsePanel } from "@/components/jd-parse-panel";
 import { MatchScorePanel } from "@/components/match-score-panel";
+import { FollowUpPanel } from "@/components/follow-up-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import type { Activity, Application, ParsedJobDescription } from "@/lib/types";
@@ -190,6 +191,17 @@ export default function ApplicationDetailPage() {
                   application={application}
                   idToken={idToken}
                   onScored={handleChanged}
+                  onUnauthorized={handleUnauthorized}
+                />
+              </div>
+            )}
+
+            {idToken && (
+              <div className="mt-6">
+                <FollowUpPanel
+                  application={application}
+                  idToken={idToken}
+                  onGenerated={handleChanged}
                   onUnauthorized={handleUnauthorized}
                 />
               </div>

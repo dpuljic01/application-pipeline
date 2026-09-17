@@ -69,6 +69,12 @@ export interface MatchDetails {
   scored_at: string;
 }
 
+// Mirrors backend/app/api/schemas/followup.py — FollowUpEmail
+export interface FollowUpEmail {
+  subject: string;
+  body: string;
+}
+
 export interface Application {
   id: string;
   company: string;
@@ -85,6 +91,7 @@ export interface Application {
   parsed_jd: ParsedJobDescription | null;
   match_score: number | null;
   match_details: MatchDetails | null;
+  generated_followup: FollowUpEmail | null;
 }
 
 export interface ApplicationCreateInput {

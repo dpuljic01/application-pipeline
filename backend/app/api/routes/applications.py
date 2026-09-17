@@ -8,10 +8,12 @@ from app.api.schemas.application import (
     ApplicationUpdate,
     StageChangeRequest,
 )
+from app.api.schemas.followup import GenerateFollowUpRequest
 from app.api.schemas.jd_parse import ParseJDRequest, ParsedJobDescription
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
 from app.domain.errors import (
+    FollowUpGenerationError,
     InvalidTransition,
     JDNotParsed,
     JDParseError,
@@ -145,6 +147,27 @@ async def score_application(
     except JDNotParsed as e:
         raise HTTPException(status_code=409, detail=str(e))
     except MatchingError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@router.post("/{application_id}/generate-followup", response_model=ApplicationRead)
+async def generate_followup(
+    application_id: UUID,
+    payload: GenerateFollowUpRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    service: ApplicationService = Depends(get_application_service),
+    llm: LLMProvider = Depends(get_llm_provider),
+) -> Application:
+    try:
+        return service.generate_followup(
+            user_id=current_user.user_id,
+            application_id=application_id,
+            llm=llm,
+            context=payload.context,
+        )
+    except NotFound:
+        raise HTTPException(status_code=404, detail="Application not found")
+    except FollowUpGenerationError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 

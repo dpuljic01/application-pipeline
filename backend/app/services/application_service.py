@@ -11,6 +11,7 @@ from app.db.repositories.company_repo import CompanyRepository
 from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
 from app.domain.errors import InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
+from app.services.followup_generator import generate_followup_email
 from app.services.jd_parser import parse_job_description
 from app.services.matcher import score_application_match
 
@@ -183,6 +184,38 @@ class ApplicationService:
                 "match_score": result["rule_score"],
                 "match_details": result,
             },
+        )
+        self.db.commit()
+        self.db.refresh(app)
+        return app
+
+    def generate_followup(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+        llm: LLMProvider,
+        context: str | None,
+    ) -> Application:
+        app = self.repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            raise NotFound("Application not found")
+
+        # FollowUpGenerationError propagates as-is - the route maps it.
+        email = generate_followup_email(
+            llm,
+            company=app.company,
+            role_title=app.role_title,
+            stage=app.stage,
+            context=context,
+        )
+
+        self.repository.update(
+            application=app,
+            data={"generated_followup": email.model_dump(mode="json")},
         )
         self.db.commit()
         self.db.refresh(app)

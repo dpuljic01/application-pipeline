@@ -48,6 +48,17 @@ def test_get_and_list_application(client):
     assert any(a["id"] == created["id"] for a in listed.json())
 
 
+def test_list_applications_ordered_newest_saved_first(client):
+    first = _create_application(client, role_title="First")
+    second = _create_application(client, role_title="Second")
+    third = _create_application(client, role_title="Third")
+
+    listed = client.get("/api/applications").json()
+    ids = [a["id"] for a in listed]
+
+    assert ids.index(third["id"]) < ids.index(second["id"]) < ids.index(first["id"])
+
+
 def test_put_application_updates_only_provided_fields(client):
     created = _create_application(client)
 

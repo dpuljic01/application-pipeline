@@ -21,6 +21,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// The only fields a column header can be clicked to sort by. `null` means
+// "no header is active" — the default order (newest saved first) applies,
+// same as the backend's own default `ORDER BY created_at DESC`.
+export type SortField = "match_score" | "stage_changed_at";
+export type SortDirection = "asc" | "desc";
+
+function compareApplications(
+  a: Application,
+  b: Application,
+  field: SortField | null,
+  direction: SortDirection,
+): number {
+  if (field === null) {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  }
+
+  const sign = direction === "asc" ? 1 : -1;
+
+  if (field === "match_score") {
+    // Unscored applications always sort last, regardless of direction —
+    // null isn't "low", it's "unknown", so it shouldn't outrank a real 0.
+    if (a.match_score === null && b.match_score === null) return 0;
+    if (a.match_score === null) return 1;
+    if (b.match_score === null) return -1;
+    return (a.match_score - b.match_score) * sign;
+  }
+
+  if (a.stage_changed_at === null && b.stage_changed_at === null) return 0;
+  if (a.stage_changed_at === null) return 1;
+  if (b.stage_changed_at === null) return -1;
+  return (
+    (new Date(a.stage_changed_at).getTime() - new Date(b.stage_changed_at).getTime()) *
+    sign
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { idToken, email, isAuthenticated, isRestoring, logout } = useAuth();
@@ -29,6 +65,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<ApplicationStage | "ALL">("ALL");
+  // null = default order (newest saved first, matches the backend default).
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  // Three-state cycle per header: unsorted -> desc -> asc -> unsorted.
+  function handleSort(field: SortField) {
+    if (field !== sortField) {
+      setSortField(field);
+      setSortDirection("desc");
+    } else if (sortDirection === "desc") {
+      setSortDirection("asc");
+    } else {
+      setSortField(null);
+    }
+  }
 
   function handleUnauthorized() {
     logout();
@@ -55,7 +106,7 @@ export default function DashboardPage() {
   }, [idToken, isAuthenticated, isRestoring]);
 
   const filtered = useMemo(() => {
-    return applications.filter((app) => {
+    const matches = applications.filter((app) => {
       const matchesStage = stageFilter === "ALL" || app.stage === stageFilter;
       const query = search.trim().toLowerCase();
       const matchesSearch =
@@ -64,7 +115,10 @@ export default function DashboardPage() {
         app.role_title.toLowerCase().includes(query);
       return matchesStage && matchesSearch;
     });
-  }, [applications, search, stageFilter]);
+    return [...matches].sort((a, b) =>
+      compareApplications(a, b, sortField, sortDirection),
+    );
+  }, [applications, search, stageFilter, sortField, sortDirection]);
 
   function handleCreated(application: Application) {
     setApplications((prev) => [application, ...prev]);
@@ -88,7 +142,7 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
-              JobDossier
+              Job Dossier
             </p>
             {email && <p className="mt-0.5 text-xs text-muted-foreground">{email}</p>}
           </div>
@@ -156,6 +210,9 @@ export default function DashboardPage() {
             onChanged={handleChanged}
             onDeleted={handleDeleted}
             onUnauthorized={handleUnauthorized}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
       </main>

@@ -1,6 +1,6 @@
-# JobDossier
+# Job Dossier
 
-**JobDossier** is a lightweight, CRM‑style web application that turns a chaotic job search into a **clear, measurable pipeline**.
+**Job Dossier** is a lightweight, CRM‑style web application that turns a chaotic job search into a **clear, measurable pipeline**.
 
 It is designed both as:
 
@@ -20,7 +20,7 @@ Most job searches fail due to:
 
 Spreadsheets and Notion break down as volume increases.
 
-**JobDossier** fixes this by treating a job search like a real sales pipeline.
+**Job Dossier** fixes this by treating a job search like a real sales pipeline.
 
 ---
 

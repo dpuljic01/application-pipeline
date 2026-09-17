@@ -18,7 +18,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobDossier",
+  title: "Job Dossier",
   description: "Job application tracker",
 };
 

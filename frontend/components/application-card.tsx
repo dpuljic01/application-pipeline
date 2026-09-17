@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { StageBadge } from "@/components/stage-badge";
+import { FollowUpBadge } from "@/components/follow-up-badge";
 import { scoreColor } from "@/lib/jd-score";
+import { needsFollowUp } from "@/lib/followup";
 import type { Application } from "@/lib/types";
 
 // Mobile equivalent of a table row: minimal on purpose — company, role,
@@ -26,6 +28,7 @@ export function ApplicationCard({ application }: { application: Application }) {
           </span>
         )}
         <StageBadge stage={application.stage} />
+        {needsFollowUp(application) && <FollowUpBadge />}
       </div>
     </Link>
   );

@@ -21,8 +21,12 @@ class ApplicationRepository:
         return self.db.scalar(stmt)
 
     def list_for_user(self, *, user_id: UUID) -> list[Application]:
-        stmt = select(Application).where(
-            Application.user_id == user_id,
+        # Explicit order, not relying on undefined DB row order: newest
+        # saved first, matching the frontend's default sort.
+        stmt = (
+            select(Application)
+            .where(Application.user_id == user_id)
+            .order_by(Application.created_at.desc())
         )
         return self.db.scalars(stmt).all()
 

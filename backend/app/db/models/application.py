@@ -57,6 +57,11 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     match_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     match_details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
+    # Cached result of the last successful follow-up email draft (Day 11).
+    # Same "one cached LLM artifact per feature" pattern as parsed_jd/
+    # match_details, not a separate audit-trail table.
+    generated_followup: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
     user = relationship("User", back_populates="applications")
     # Named `linked_company`, not `company` — that name is already the
     # existing free-text string column above.

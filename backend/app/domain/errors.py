@@ -28,3 +28,7 @@ class JDNotParsed(DomainError):
 
 class MatchingError(DomainError):
     pass
+
+
+class FollowUpGenerationError(DomainError):
+    pass

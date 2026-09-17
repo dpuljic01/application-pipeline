@@ -126,6 +126,17 @@ export function scoreApplication(
   });
 }
 
+export function generateFollowUp(
+  token: string,
+  applicationId: string,
+  context?: string,
+): Promise<Application> {
+  return request<Application>(`/applications/${applicationId}/generate-followup`, token, {
+    method: "POST",
+    body: JSON.stringify({ context: context || null }),
+  });
+}
+
 export function getProfile(token: string): Promise<Profile> {
   return request<Profile>("/profile", token);
 }
