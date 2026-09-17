@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-8 text-center">
           <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
-            Application Pipeline
+            JobDossier
           </p>
           <div className="mx-auto mt-3 h-px w-10 bg-border" />
         </div>

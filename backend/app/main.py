@@ -4,7 +4,7 @@ from app.api.routes import api_router
 from app.core.config import settings
 
 
-app = FastAPI(title="Application Pipeline API")
+app = FastAPI(title="JobDossier API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,

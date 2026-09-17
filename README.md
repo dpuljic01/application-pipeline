@@ -1,6 +1,6 @@
-# Application Pipeline
+# JobDossier
 
-**Application Pipeline** is a lightweight, CRM‑style web application that turns a chaotic job search into a **clear, measurable pipeline**.
+**JobDossier** is a lightweight, CRM‑style web application that turns a chaotic job search into a **clear, measurable pipeline**.
 
 It is designed both as:
 
@@ -20,7 +20,7 @@ Most job searches fail due to:
 
 Spreadsheets and Notion break down as volume increases.
 
-**Application Pipeline** fixes this by treating a job search like a real sales pipeline.
+**JobDossier** fixes this by treating a job search like a real sales pipeline.
 
 ---
 

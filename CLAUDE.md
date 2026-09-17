@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Application Pipeline is a CRM-style job search tracker. It is a portfolio project built backend-first, with AWS deployment and AI integration planned across 30 build days (see `PLAN.md`). The backend is a FastAPI modular monolith; the frontend (Next.js) and infrastructure (Terraform) have not yet been built.
+JobDossier (internal project name during development: "Application Pipeline" — still used in some file/directory names, code identifiers, and historical PLAN.md entries) is a CRM-style job search tracker. It is a portfolio project built backend-first, with AWS deployment and AI integration planned across 30 build days (see `PLAN.md`). The backend is a FastAPI modular monolith; the frontend (Next.js) and infrastructure (Terraform) have not yet been built.
 
 ## Local Development
 

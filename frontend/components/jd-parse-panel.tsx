@@ -57,7 +57,7 @@ export function JdParsePanel({
   return (
     <div className="rounded-[3px] border border-border bg-card px-4 py-4">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm font-medium text-foreground">JD analysis</p>
+        <p className="text-sm font-medium text-foreground">Job description analysis</p>
         {parsedJd && (
           <button
             type="button"

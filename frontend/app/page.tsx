@@ -88,7 +88,7 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <p className="font-mono text-base font-medium tracking-[0.15em] text-foreground uppercase">
-              Application Pipeline
+              JobDossier
             </p>
             {email && <p className="mt-0.5 text-xs text-muted-foreground">{email}</p>}
           </div>

@@ -1,5 +1,10 @@
-# Application Pipeline — Compressed Build Plan
+# JobDossier — Compressed Build Plan
 
+> Renamed from "Application Pipeline" (2026-09-17) — the old name is still used
+> throughout the codebase (repo/directory name, `parse-jd`/`jd_parser.py`/etc.
+> code identifiers referring to Job Description, not the product) and in
+> historical entries below, which are left as-written rather than rewritten.
+>
 > ~18 working days · 2–3 hours each · Backend-first, AWS deploy, AI integration
 >
 > This is a compressed version of the original 30-day plan, cut down for a tighter
