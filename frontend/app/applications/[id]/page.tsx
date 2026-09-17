@@ -69,6 +69,17 @@ export default function ApplicationDetailPage() {
 
   function handleActivityAdded(activity: Activity) {
     setActivities((prev) => [activity, ...prev]);
+    // Clears the "needs follow-up" badge immediately, without waiting for
+    // a reload - mirrors what the backend computes from activity history.
+    if (activity.activity_type === "FOLLOW_UP") {
+      setApplication((prev) =>
+        prev &&
+        (prev.last_followup_at === null ||
+          new Date(activity.occurred_at) > new Date(prev.last_followup_at))
+          ? { ...prev, last_followup_at: activity.occurred_at }
+          : prev,
+      );
+    }
   }
 
   function handleParsed(parsed: ParsedJobDescription) {

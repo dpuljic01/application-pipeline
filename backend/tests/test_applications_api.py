@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from app.core.security.deps import CurrentUser, get_current_user
 from app.domain.enums import ApplicationStage
@@ -57,6 +58,43 @@ def test_list_applications_ordered_newest_saved_first(client):
     ids = [a["id"] for a in listed]
 
     assert ids.index(third["id"]) < ids.index(second["id"]) < ids.index(first["id"])
+
+
+def test_last_followup_at_is_null_with_no_followup_activity(client):
+    created = _create_application(client)
+    assert created["last_followup_at"] is None
+
+
+def test_last_followup_at_reflects_logged_followup_activity(client):
+    created = _create_application(client)
+
+    response = client.post(
+        f"/api/applications/{created['id']}/activities",
+        json={
+            "activity_type": "FOLLOW_UP",
+            "note": "Sent a follow-up email.",
+            "occurred_at": "2026-09-17T09:00:00Z",
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    fetched = client.get(f"/api/applications/{created['id']}").json()
+    assert fetched["last_followup_at"] is not None
+    assert datetime.fromisoformat(fetched["last_followup_at"]) == datetime(
+        2026, 9, 17, 9, 0, 0, tzinfo=timezone.utc
+    )
+
+
+def test_last_followup_at_ignores_other_activity_types(client):
+    created = _create_application(client)
+
+    client.post(
+        f"/api/applications/{created['id']}/activities",
+        json={"activity_type": "NOTE", "note": "Just a note."},
+    )
+
+    fetched = client.get(f"/api/applications/{created['id']}").json()
+    assert fetched["last_followup_at"] is None
 
 
 def test_put_application_updates_only_provided_fields(client):

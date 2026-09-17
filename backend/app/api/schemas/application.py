@@ -50,3 +50,4 @@ class ApplicationRead(BaseModel):
     match_score: int | None
     match_details: dict | None
     generated_followup: dict | None
+    last_followup_at: datetime | None

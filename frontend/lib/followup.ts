@@ -18,5 +18,13 @@ export function needsFollowUp(application: Application): boolean {
   if (threshold === undefined || application.stage_changed_at === null) {
     return false;
   }
-  return daysSince(application.stage_changed_at) >= threshold;
+  // Logging a follow-up activity resets the clock: if it happened more
+  // recently than the stage change, count staleness from there instead -
+  // otherwise the badge never clears once you've actually followed up.
+  const reference =
+    application.last_followup_at &&
+    new Date(application.last_followup_at) > new Date(application.stage_changed_at)
+      ? application.last_followup_at
+      : application.stage_changed_at;
+  return daysSince(reference) >= threshold;
 }

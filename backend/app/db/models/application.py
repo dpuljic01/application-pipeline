@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import UUIDPrimaryKeyMixin, TimestampMixin
-from app.domain.enums import ApplicationStage
+from app.domain.enums import ActivityType, ApplicationStage
 
 
 class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -79,3 +79,17 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ),  # No need for DESC magic, postgres can perform backward scans on B-tree indexes, meaning ASC index supports both sort directions
         Index("ix_applications_user_stage", "user_id", "stage"),
     )
+
+    @property
+    def last_followup_at(self) -> datetime | None:
+        """Most recent logged FOLLOW_UP activity's occurred_at (Day 11) - the
+        signal the frontend uses to clear the "needs follow-up" nudge once
+        the user has actually followed up. Requires `activities` to be
+        loaded (see ApplicationRepository's selectinload) or this triggers
+        a lazy-load per access."""
+        followups = [
+            activity.occurred_at
+            for activity in self.activities
+            if activity.activity_type == ActivityType.FOLLOW_UP
+        ]
+        return max(followups) if followups else None
