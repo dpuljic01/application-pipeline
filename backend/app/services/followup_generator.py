@@ -1,9 +1,17 @@
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
-from app.api.schemas.followup import FollowUpEmail
 from app.domain.enums import ApplicationStage
 from app.domain.errors import FollowUpGenerationError
 from app.integrations.llm.base import LLMProvider, LLMProviderError, LLMTimeoutError
+
+
+# Lives here, not in api/schemas/: this is the LLM's forced structured-output
+# target, not a hand-written API contract - api/schemas/application.py
+# imports it for the response shape, not the reverse.
+class FollowUpEmail(BaseModel):
+    subject: str
+    body: str
+
 
 SYSTEM_PROMPT = """\
 You write short, plain follow-up emails for a job applicant to send to a

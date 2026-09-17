@@ -20,7 +20,15 @@ async def create_company(
     current_user: CurrentUser = Depends(get_current_user),
     service: CompanyService = Depends(get_company_service),
 ) -> Company:
-    return service.create_company(user_id=current_user.user_id, payload=payload)
+    return service.create_company(
+        user_id=current_user.user_id,
+        name=payload.name,
+        website=str(payload.website) if payload.website else None,
+        industry=payload.industry,
+        size=payload.size,
+        location=payload.location,
+        notes=payload.notes,
+    )
 
 
 @router.get("", response_model=list[CompanyRead])
@@ -67,9 +75,12 @@ async def update_company(
     current_user: CurrentUser = Depends(get_current_user),
     service: CompanyService = Depends(get_company_service),
 ) -> Company:
+    data = payload.model_dump(exclude_unset=True)
+    if data.get("website") is not None:
+        data["website"] = str(data["website"])
     try:
         return service.update_company(
-            user_id=current_user.user_id, company_id=company_id, payload=payload
+            user_id=current_user.user_id, company_id=company_id, data=data
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Company not found")

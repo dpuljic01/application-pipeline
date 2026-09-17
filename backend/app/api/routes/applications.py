@@ -9,7 +9,7 @@ from app.api.schemas.application import (
     StageChangeRequest,
 )
 from app.api.schemas.followup import GenerateFollowUpRequest
-from app.api.schemas.jd_parse import ParseJDRequest, ParsedJobDescription
+from app.api.schemas.jd_parse import ParseJDRequest
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
 from app.domain.errors import (
@@ -22,6 +22,7 @@ from app.domain.errors import (
 )
 from app.integrations.llm.base import LLMProvider
 from app.services.application_service import ApplicationService
+from app.services.jd_parser import ParsedJobDescription
 from app.services.profile_service import ProfileService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
@@ -78,11 +79,14 @@ async def update_application(
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
 ) -> Application:
+    data = payload.model_dump(exclude_unset=True)
+    if data.get("job_url") is not None:
+        data["job_url"] = str(data["job_url"])
     try:
         return service.update_application(
             user_id=current_user.user_id,
             application_id=application_id,
-            payload=payload,
+            data=data,
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")

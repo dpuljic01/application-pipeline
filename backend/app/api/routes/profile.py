@@ -23,4 +23,5 @@ async def update_profile(
     current_user: CurrentUser = Depends(get_current_user),
     service: ProfileService = Depends(get_profile_service),
 ) -> Profile:
-    return service.update_profile(user_id=current_user.user_id, payload=payload)
+    data = payload.model_dump(exclude_unset=True)
+    return service.update_profile(user_id=current_user.user_id, data=data)

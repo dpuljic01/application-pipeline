@@ -1,11 +1,14 @@
 import httpx
 from fastapi import HTTPException
+import logging
 import time
 from typing import Any, Dict, Optional
 from jose import jwt
 from jose.exceptions import JWTError, ExpiredSignatureError
 from pydantic import BaseModel
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class JWKSCache:
@@ -48,8 +51,15 @@ class JWKSCache:
                 self.jwks = resp.json()
                 self.last_fetched_at = time.time()
         except httpx.HTTPError as e:
-            # If we can't fetch keys, we can't verify tokens => server-side failure
-            raise HTTPException(status_code=500, detail=f"Failed to fetch JWKS: {e}")
+            # 503, not 500: our code isn't broken, Cognito's JWKS endpoint is
+            # unreachable - a retry-later situation for the client, not a bug
+            # here. The underlying error is logged server-side, not leaked to
+            # the client (it can include internal URLs/timeouts).
+            logger.warning("Failed to fetch Cognito JWKS: %s", e)
+            raise HTTPException(
+                status_code=503,
+                detail="Authentication service temporarily unavailable",
+            )
 
     def clear(self) -> None:
         """Clear the JWKS cache."""

@@ -104,6 +104,13 @@ Backend **never** trusts frontend claims.
 
 ### Infrastructure
 
+**Live (free tier, always on):**
+* [Render](https://render.com) — backend, Docker runtime, deployed from `render.yaml`
+* [Neon](https://neon.tech) — external Postgres (Render's own free Postgres expires after 30 days, so the database lives outside Render)
+* [Vercel](https://vercel.com) — frontend
+* Custom domains on `puljic.ch`: `api.puljic.ch` (backend) and `jobs.puljic.ch` (frontend)
+
+**Optional (AWS, spun up on demand for interviews/demos, not run 24/7):**
 * Terraform
 * VPC (public/private subnets, NAT), Security Groups
 * AWS ECS (Fargate), ECR
@@ -192,6 +199,22 @@ npm run dev
 
 Runs at `http://localhost:3000`. Requires the backend running locally (see above) and a real Cognito user pool — there's no mock auth path.
 
+### Live Deployment (Render + Neon + Vercel, free tier)
+
+This is the actual always-on deployment — simpler than the AWS path below, and free.
+
+**Backend (Render):**
+1. Connect this repo in the Render dashboard via "New > Blueprint" — it reads `render.yaml` automatically (Docker runtime, free plan, health check at `/api/health`).
+2. Create a [Neon](https://neon.tech) Postgres project and paste its connection string into Render's `DATABASE_URL` env var (`sync: false` in `render.yaml` — set manually, not committed).
+3. Set the other `sync: false` env vars in the Render dashboard: `CORS_ORIGINS` (the Vercel frontend's origin), `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`, `ADZUNA_APP_ID`/`ADZUNA_APP_KEY`.
+4. Custom domain: add `api.puljic.ch` under the Render service's Settings → Custom Domains, then add a CNAME record for `api` in your DNS provider pointing at the target Render gives you. Render auto-issues a Let's Encrypt cert once DNS resolves — usually a few minutes.
+5. **Run migrations against Neon after every deploy that adds one** — Render does not do this automatically: `DATABASE_URL="<neon connection string>" poetry run alembic upgrade head` from `backend/`, or via Neon's own SQL editor. Skipping this is a real, repeatable failure mode: it 500s `GET /applications` (and anything else touching the changed table) until the migration runs, and it's bitten this project twice already (Day 9's `parsed_jd` column, Day 10's `match_score`/`match_details`).
+
+**Frontend (Vercel):**
+1. Import this repo as a Vercel project (root: `frontend/`).
+2. Set `NEXT_PUBLIC_API_BASE_URL=https://api.puljic.ch/api` and `NEXT_PUBLIC_COGNITO_REGION`/`NEXT_PUBLIC_COGNITO_APP_CLIENT_ID` as **Config** (not Secret) environment variables — this app is 100% client-rendered, so the browser itself needs to read these at runtime; a Secret-type variable is write-only and can't be read back client-side.
+3. Custom domain: add `jobs.puljic.ch` under the Vercel project's domain settings, same CNAME-then-wait-for-cert pattern as Render.
+
 ### Infrastructure (AWS, optional)
 
 ```bash
@@ -201,7 +224,7 @@ terraform plan -var="image_tag=$(git rev-parse --short HEAD)"
 terraform apply "tfplan"
 ```
 
-Requires an AWS profile with the right permissions configured (see `provider "aws"` in `main.tf`) and a Docker image already built/pushed to ECR for that tag (`docker build --platform linux/amd64 ...`, then `docker push`). This stack costs real money while running — the NAT Gateway alone is ~$0.045/hr — so the intended workflow is `apply` before a demo, `terraform destroy` right after, not leaving it up. See `docs/application-pipeline-summary.md` §20-26 for the concepts and gotchas behind each piece.
+Requires an AWS profile with the right permissions configured (see `provider "aws"` in `main.tf`) and a Docker image already built/pushed to ECR for that tag (`docker build --platform linux/amd64 ...`, then `docker push`). This stack costs real money while running — the NAT Gateway alone is ~$0.045/hr — so the intended workflow is `apply` before a demo, `terraform destroy` right after, not leaving it up. Not the live deployment path (see above) — kept as a from-scratch AWS reference and for demos where that specifically matters. See `docs/application-pipeline-summary.md` §20-26 for the concepts and gotchas behind each piece.
 
 ---
 

@@ -2,9 +2,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.api.schemas.company import CompanyCreate, CompanyUpdate
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
+from app.domain.enums import CompanySize
 from app.domain.errors import CompanyHasApplications, NotFound
 
 
@@ -31,29 +31,32 @@ class CompanyService:
             user_id=user_id, company_id=company_id
         )
 
-    def create_company(self, *, user_id: UUID, payload: CompanyCreate):
+    def create_company(
+        self,
+        *,
+        user_id: UUID,
+        name: str,
+        website: str | None = None,
+        industry: str | None = None,
+        size: CompanySize | None = None,
+        location: str | None = None,
+        notes: str | None = None,
+    ):
         company = self.repository.create(
             user_id=user_id,
-            name=payload.name,
-            website=str(payload.website) if payload.website else None,
-            industry=payload.industry,
-            size=payload.size,
-            location=payload.location,
-            notes=payload.notes,
+            name=name,
+            website=website,
+            industry=industry,
+            size=size,
+            location=location,
+            notes=notes,
         )
         self.db.commit()
         self.db.refresh(company)
         return company
 
-    def update_company(
-        self, *, user_id: UUID, company_id: UUID, payload: CompanyUpdate
-    ):
+    def update_company(self, *, user_id: UUID, company_id: UUID, data: dict):
         company = self.get_company_for_user(user_id=user_id, company_id=company_id)
-
-        data = payload.model_dump(exclude_unset=True)
-        if data.get("website") is not None:
-            data["website"] = str(data["website"])
-
         self.repository.update(company=company, data=data)
         self.db.commit()
         self.db.refresh(company)

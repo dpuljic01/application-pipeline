@@ -2,8 +2,10 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, AnyHttpUrl, Field, ConfigDict
 
-from app.api.schemas.jd_parse import ParsedJobDescription
 from app.domain.enums import ApplicationStage
+from app.services.followup_generator import FollowUpEmail
+from app.services.jd_parser import ParsedJobDescription
+from app.services.matcher import MatchDetails
 
 
 class ApplicationCreate(BaseModel):
@@ -48,5 +50,5 @@ class ApplicationRead(BaseModel):
     stage_changed_at: datetime | None
     parsed_jd: ParsedJobDescription | None
     match_score: int | None
-    match_details: dict | None
-    generated_followup: dict | None
+    match_details: MatchDetails | None
+    generated_followup: FollowUpEmail | None

@@ -2,20 +2,62 @@ from __future__ import annotations
 
 import re
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from app.api.schemas.jd_parse import ParsedJobDescription
-from app.api.schemas.match import MatchInsights
-from app.api.schemas.profile import ProfileRead
 from app.db.mixins import utcnow
 from app.db.models.profile import Profile
 from app.domain.errors import MatchingError
 from app.integrations.llm.base import LLMProvider, LLMProviderError, LLMTimeoutError
+from app.services.jd_parser import ParsedJobDescription
 
 SENIORITY_ORDER = ["junior", "mid", "senior", "staff"]
 
 
-def _score_skills(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict:
+# --- output shapes -----------------------------------------------------
+# Live here, not in api/schemas/: MatchInsights is the LLM's forced
+# structured-output target (a business-logic concern), and MatchDetails is
+# what this module actually produces. api/schemas/application.py imports
+# these for its response shape, not the other way around - matcher.py has
+# no reason to know or care that its result ends up in an HTTP response.
+
+
+class MatchInsights(BaseModel):
+    """LLM-generated qualitative read of fit, alongside the deterministic
+    rule-based score. Never changes the numeric match_score itself."""
+
+    fit_narrative: str = Field(
+        description="2-4 sentence honest assessment of fit, including gaps"
+    )
+    key_strengths: list[str]
+    gaps: list[str]
+    talking_points: list[str] = Field(
+        description="Cover-letter-ready points connecting the candidate's profile to this specific role"
+    )
+
+
+class MatchComponentScore(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    score: int
+    max: int
+
+
+class MatchDetails(BaseModel):
+    rule_score: int
+    components: dict[str, MatchComponentScore]
+    insights: MatchInsights
+    scored_at: str
+
+
+# --- rule-based scoring --------------------------------------------------
+# Operates on the ORM Profile object directly (not a Pydantic Read schema):
+# matcher.py is a service, and services work with ORM objects, the same way
+# ApplicationService never converts Application into a Pydantic type
+# internally. `languages` is a JSONB column, so its entries are plain
+# dicts here, not LanguageEntry objects.
+
+
+def _score_skills(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
     profile_set = {s.strip().lower() for s in profile.skills}
     required_pool = {s.strip().lower() for s in parsed_jd.required_skills} | {
         s.strip().lower() for s in parsed_jd.tech_stack
@@ -41,7 +83,7 @@ def _score_skills(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict
     }
 
 
-def _score_seniority(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict:
+def _score_seniority(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
     targets = [t for t in profile.target_seniorities if t in SENIORITY_ORDER]
     assessed = parsed_jd.seniority_assessed
 
@@ -60,12 +102,12 @@ def _score_seniority(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> d
     return {"score": score, "max": 20, "assessed": assessed, "targets": targets}
 
 
-def _score_languages(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict:
+def _score_languages(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
     required = parsed_jd.languages
     if not required:
         return {"score": 15, "max": 15, "matched": [], "missing": []}
 
-    profile_langs = {entry.language.strip().lower() for entry in profile.languages}
+    profile_langs = {entry["language"].strip().lower() for entry in profile.languages}
     matched = [lang for lang in required if lang.strip().lower() in profile_langs]
     missing = [lang for lang in required if lang.strip().lower() not in profile_langs]
 
@@ -104,7 +146,7 @@ def parse_salary_midpoint_chf(text: str | None) -> int | None:
     return round(sum(first_two) / len(first_two))
 
 
-def _score_salary(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict:
+def _score_salary(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
     midpoint = parse_salary_midpoint_chf(parsed_jd.salary_range)
     floor = profile.min_salary_chf
     ideal = profile.ideal_salary_chf
@@ -122,7 +164,7 @@ def _score_salary(profile: ProfileRead, parsed_jd: ParsedJobDescription) -> dict
     return {"score": score, "max": 15, "posting_midpoint_chf": midpoint}
 
 
-def _score_remote_policy(parsed_jd: ParsedJobDescription) -> dict:
+def _score_remote_policy(*, parsed_jd: ParsedJobDescription) -> dict:
     policy = (parsed_jd.remote_policy or "").strip().lower()
 
     if not policy or "remote" in policy or "hybrid" in policy:
@@ -136,14 +178,14 @@ def _score_remote_policy(parsed_jd: ParsedJobDescription) -> dict:
 
 
 def compute_rule_based_components(
-    *, profile: ProfileRead, parsed_jd: ParsedJobDescription
+    *, profile: Profile, parsed_jd: ParsedJobDescription
 ) -> dict[str, dict]:
     return {
-        "skills": _score_skills(profile, parsed_jd),
-        "seniority": _score_seniority(profile, parsed_jd),
-        "language": _score_languages(profile, parsed_jd),
-        "salary": _score_salary(profile, parsed_jd),
-        "remote_policy": _score_remote_policy(parsed_jd),
+        "skills": _score_skills(profile=profile, parsed_jd=parsed_jd),
+        "seniority": _score_seniority(profile=profile, parsed_jd=parsed_jd),
+        "language": _score_languages(profile=profile, parsed_jd=parsed_jd),
+        "salary": _score_salary(profile=profile, parsed_jd=parsed_jd),
+        "remote_policy": _score_remote_policy(parsed_jd=parsed_jd),
     }
 
 
@@ -166,14 +208,17 @@ Be specific and grounded in the actual posting text, not generic advice.
 
 def _build_match_user_prompt(
     *,
-    profile: ProfileRead,
+    profile: Profile,
     parsed_jd: ParsedJobDescription,
     application_location: str | None,
 ) -> str:
+    languages = ", ".join(
+        f"{entry['language']} ({entry['level']})" for entry in profile.languages
+    )
     profile_summary = (
         f"Years of experience: {profile.years_experience if profile.years_experience is not None else 'not stated'}\n"
         f"Skills: {', '.join(profile.skills) or 'not stated'}\n"
-        f"Languages: {', '.join(f'{entry.language} ({entry.level})' for entry in profile.languages) or 'not stated'}\n"
+        f"Languages: {languages or 'not stated'}\n"
         f"Target seniority: {', '.join(profile.target_seniorities) or 'not stated'}\n"
         f"Home location: {profile.home_location or 'not stated'}"
     )
@@ -187,7 +232,7 @@ def _build_match_user_prompt(
 def generate_match_insights(
     llm: LLMProvider,
     *,
-    profile: ProfileRead,
+    profile: Profile,
     parsed_jd: ParsedJobDescription,
     application_location: str | None,
 ) -> MatchInsights:
@@ -215,24 +260,20 @@ def score_application_match(
     profile: Profile,
     parsed_jd: ParsedJobDescription,
     application_location: str | None,
-) -> dict:
-    profile_read = ProfileRead.model_validate(profile)
-
-    components = compute_rule_based_components(
-        profile=profile_read, parsed_jd=parsed_jd
-    )
+) -> MatchDetails:
+    components = compute_rule_based_components(profile=profile, parsed_jd=parsed_jd)
     rule_score = sum(c["score"] for c in components.values())
 
     insights = generate_match_insights(
         llm,
-        profile=profile_read,
+        profile=profile,
         parsed_jd=parsed_jd,
         application_location=application_location,
     )
 
-    return {
-        "rule_score": rule_score,
-        "components": components,
-        "insights": insights.model_dump(),
-        "scored_at": utcnow().isoformat(),
-    }
+    return MatchDetails(
+        rule_score=rule_score,
+        components=components,
+        insights=insights,
+        scored_at=utcnow().isoformat(),
+    )

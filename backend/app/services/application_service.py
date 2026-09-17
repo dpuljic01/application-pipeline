@@ -1,8 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
 
-from app.api.schemas.application import ApplicationUpdate
-from app.api.schemas.jd_parse import ParsedJobDescription
 from app.db.models.application import Application
 from app.db.models.profile import Profile
 from app.db.repositories.activity_repo import ActivityRepository
@@ -12,7 +10,7 @@ from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
 from app.domain.errors import InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
 from app.services.followup_generator import generate_followup_email
-from app.services.jd_parser import parse_job_description
+from app.services.jd_parser import ParsedJobDescription, parse_job_description
 from app.services.matcher import score_application_match
 
 
@@ -89,7 +87,7 @@ class ApplicationService:
         *,
         user_id: UUID,
         application_id: UUID,
-        payload: ApplicationUpdate,
+        data: dict,
     ):
         app = self.repository.get_for_user(
             user_id=user_id,
@@ -97,10 +95,6 @@ class ApplicationService:
         )
         if not app:
             raise NotFound("Application not found")
-
-        data = payload.model_dump(exclude_unset=True)
-        if data.get("job_url") is not None:
-            data["job_url"] = str(data["job_url"])
 
         self.repository.update(
             application=app,
@@ -142,7 +136,7 @@ class ApplicationService:
             raise NotFound("Application not found")
 
         # JDParseError propagates as-is — the route maps it to an HTTP error.
-        parsed = parse_job_description(llm, jd_text)
+        parsed = parse_job_description(llm, jd_text=jd_text)
 
         self.repository.update(
             application=app,
@@ -181,8 +175,8 @@ class ApplicationService:
         self.repository.update(
             application=app,
             data={
-                "match_score": result["rule_score"],
-                "match_details": result,
+                "match_score": result.rule_score,
+                "match_details": result.model_dump(mode="json"),
             },
         )
         self.db.commit()

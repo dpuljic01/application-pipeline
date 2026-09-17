@@ -83,8 +83,13 @@ Routes return ORM objects typed honestly (`-> Application`), FastAPI serializes 
 | `NotFound`      | 404         |
 | `Forbidden`     | 403         |
 | `InvalidTransition` | 409    |
+| `CompanyHasApplications` | 409 |
+| `JDNotParsed`   | 409         |
+| `JDParseError`  | 502         |
+| `MatchingError` | 502         |
+| `FollowUpGenerationError` | 502 |
 
-Catch and re-raise as `HTTPException` in the route layer — never let domain errors propagate to FastAPI's default handler.
+Catch and re-raise as `HTTPException` in the route layer — never let domain errors propagate to FastAPI's default handler. `backend/app/main.py` also registers global handlers for `DomainError` and bare `Exception` as a defense-in-depth fallback (mapping the same table above, defaulting to 500 for anything unmapped) — this only fires if a route forgets its own explicit mapping; it is not a substitute for the route-layer rule above. The `Exception` handler also ensures no unexpected error ever leaks internal details (stack traces, exception text) to the client — it logs server-side and returns a generic `{"detail": "Internal server error"}`.
 
 ### Alembic Notes
 

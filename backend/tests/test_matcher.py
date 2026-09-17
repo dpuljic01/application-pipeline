@@ -1,28 +1,27 @@
-import uuid
-
 import pytest
 
-from app.api.schemas.jd_parse import ParsedJobDescription
-from app.api.schemas.profile import LanguageEntry, ProfileRead
+from app.db.models.profile import Profile
+from app.services.jd_parser import ParsedJobDescription
 from app.services.matcher import (
     compute_rule_based_components,
     parse_salary_midpoint_chf,
 )
 
 
-def make_profile(**overrides) -> ProfileRead:
+def make_profile(**overrides) -> Profile:
+    # matcher.py operates on the ORM Profile object directly, not a Pydantic
+    # Read schema - languages is a JSONB column, so entries are plain dicts.
     defaults = dict(
-        id=uuid.uuid4(),
         years_experience=7,
         skills=["Python", "FastAPI", "Docker"],
-        languages=[LanguageEntry(language="English", level="fluent")],
+        languages=[{"language": "English", "level": "fluent"}],
         target_seniorities=["mid", "senior"],
         min_salary_chf=90_000,
         ideal_salary_chf=120_000,
         home_location="Thalwil, Switzerland",
     )
     defaults.update(overrides)
-    return ProfileRead(**defaults)
+    return Profile(**defaults)
 
 
 def make_jd(**overrides) -> ParsedJobDescription:
@@ -194,8 +193,8 @@ def test_score_skills_empty_profile_skills_scores_zero_for_stated_requirements()
 def test_score_languages_all_present():
     profile = make_profile(
         languages=[
-            LanguageEntry(language="English", level="fluent"),
-            LanguageEntry(language="German", level="B1"),
+            {"language": "English", "level": "fluent"},
+            {"language": "German", "level": "B1"},
         ]
     )
     jd = make_jd(languages=["English", "German"])
@@ -204,9 +203,7 @@ def test_score_languages_all_present():
 
 
 def test_score_languages_missing_one():
-    profile = make_profile(
-        languages=[LanguageEntry(language="English", level="fluent")]
-    )
+    profile = make_profile(languages=[{"language": "English", "level": "fluent"}])
     jd = make_jd(languages=["English", "French"])
     components = compute_rule_based_components(profile=profile, parsed_jd=jd)
     assert components["language"]["score"] == round(15 * 0.5)

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.schemas.jd_parse import Seniority
+from app.services.jd_parser import Seniority
 
 
 class LanguageEntry(BaseModel):
