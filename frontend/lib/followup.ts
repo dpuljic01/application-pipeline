@@ -15,16 +15,13 @@ export function daysSince(iso: string): number {
 
 export function needsFollowUp(application: Application): boolean {
   const threshold = STALE_THRESHOLD_DAYS[application.stage];
-  if (threshold === undefined || application.stage_changed_at === null) {
+  // last_activity_at updates on ANY logged activity (a note, a stage
+  // change, etc.), not just an outbound follow-up - so it's already the
+  // right "time since anything happened" signal, and always >=
+  // stage_changed_at since a stage transition itself logs an activity.
+  const reference = application.last_activity_at ?? application.stage_changed_at;
+  if (threshold === undefined || reference === null) {
     return false;
   }
-  // Logging a follow-up activity resets the clock: if it happened more
-  // recently than the stage change, count staleness from there instead -
-  // otherwise the badge never clears once you've actually followed up.
-  const reference =
-    application.last_followup_at &&
-    new Date(application.last_followup_at) > new Date(application.stage_changed_at)
-      ? application.last_followup_at
-      : application.stage_changed_at;
   return daysSince(reference) >= threshold;
 }

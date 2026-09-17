@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app.db.models.application import Application
@@ -14,15 +14,9 @@ class ApplicationRepository:
     def get_for_user(
         self, *, user_id: UUID, application_id: UUID
     ) -> Application | None:
-        stmt = (
-            select(Application)
-            .where(
-                Application.id == application_id,
-                Application.user_id == user_id,
-            )
-            # Application.last_followup_at reads self.activities - load it
-            # here rather than lazily, one query instead of N.
-            .options(selectinload(Application.activities))
+        stmt = select(Application).where(
+            Application.id == application_id,
+            Application.user_id == user_id,
         )
         return self.db.scalar(stmt)
 
@@ -32,19 +26,14 @@ class ApplicationRepository:
         stmt = (
             select(Application)
             .where(Application.user_id == user_id)
-            .options(selectinload(Application.activities))
             .order_by(Application.created_at.desc())
         )
         return self.db.scalars(stmt).all()
 
     def list_for_company(self, *, user_id: UUID, company_id: UUID) -> list[Application]:
-        stmt = (
-            select(Application)
-            .where(
-                Application.user_id == user_id,
-                Application.company_id == company_id,
-            )
-            .options(selectinload(Application.activities))
+        stmt = select(Application).where(
+            Application.user_id == user_id,
+            Application.company_id == company_id,
         )
         return self.db.scalars(stmt).all()
 

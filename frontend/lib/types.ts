@@ -92,7 +92,6 @@ export interface Application {
   match_score: number | null;
   match_details: MatchDetails | null;
   generated_followup: FollowUpEmail | null;
-  last_followup_at: string | null;
 }
 
 export interface ApplicationCreateInput {
