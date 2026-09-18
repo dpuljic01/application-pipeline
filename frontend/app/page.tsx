@@ -11,6 +11,7 @@ import { StatsRow } from "@/components/stats-row";
 import { StageBreakdown } from "@/components/stage-breakdown";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
 import { AppHeader } from "@/components/app-header";
+import { LoadingScreen } from "@/components/loading-screen";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -131,7 +132,11 @@ export default function DashboardPage() {
     setApplications((prev) => prev.filter((app) => app.id !== applicationId));
   }
 
-  if (isRestoring || !isAuthenticated) {
+  if (isRestoring) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 

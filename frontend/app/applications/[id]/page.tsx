@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getApplication, listActivities, ApiError } from "@/lib/api";
 import { AppHeader } from "@/components/app-header";
+import { LoadingScreen } from "@/components/loading-screen";
 import { StageBadge } from "@/components/stage-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
 import { EditApplicationDialog } from "@/components/edit-application-dialog";
@@ -85,7 +86,11 @@ export default function ApplicationDetailPage() {
     setApplication((prev) => (prev ? { ...prev, parsed_jd: parsed } : prev));
   }
 
-  if (isRestoring || !isAuthenticated) {
+  if (isRestoring) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 

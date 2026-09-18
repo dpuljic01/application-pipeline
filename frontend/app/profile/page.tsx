@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { getProfile, updateProfile, ApiError } from "@/lib/api";
 import type { LanguageEntry, Profile, Seniority } from "@/lib/types";
 import { AppHeader } from "@/components/app-header";
+import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,7 +169,11 @@ export default function ProfilePage() {
     }
   }
 
-  if (isRestoring || !isAuthenticated) {
+  if (isRestoring) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 
