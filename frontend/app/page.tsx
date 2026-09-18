@@ -7,6 +7,7 @@ import { listApplications, ApiError } from "@/lib/api";
 import { APPLICATION_STAGES } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { ApplicationsTable } from "@/components/applications-table";
+import { ApplicationsTableSkeleton } from "@/components/applications-table-skeleton";
 import { StatsRow } from "@/components/stats-row";
 import { StageBreakdown } from "@/components/stage-breakdown";
 import { AddApplicationDialog } from "@/components/add-application-dialog";
@@ -188,7 +189,7 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <p className="font-mono text-xs text-muted-foreground">Loading…</p>
+          <ApplicationsTableSkeleton />
         ) : (
           <ApplicationsTable
             applications={filtered}

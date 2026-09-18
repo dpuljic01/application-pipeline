@@ -9,7 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, ExternalLink } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronRight,
+  ExternalLink,
+  Inbox,
+} from "lucide-react";
 import { StageBadge } from "@/components/stage-badge";
 import { FollowUpBadge } from "@/components/follow-up-badge";
 import { StageChangeMenu } from "@/components/stage-change-menu";
@@ -82,10 +89,11 @@ export function ApplicationsTable({
 
   if (applications.length === 0) {
     return (
-      <div className="rounded-[3px] border border-dashed border-border py-16 text-center">
-        <p className="text-sm text-muted-foreground">No applications yet.</p>
+      <div className="flex flex-col items-center rounded-[3px] border border-dashed border-border py-16 text-center">
+        <Inbox className="size-6 text-muted-foreground/60" />
+        <p className="mt-3 text-sm text-muted-foreground">No applications yet.</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Add one to start tracking the pipeline.
+          Add one above to start tracking the pipeline.
         </p>
       </div>
     );
