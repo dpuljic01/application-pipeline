@@ -8,10 +8,10 @@ from app.domain.enums import ApplicationStage
 
 def _create_application(client, **overrides):
     payload = {
-        "company": "Hamilton AG",
+        "company": "Northgate AG",
         "role_title": "Software Engineer",
-        "job_url": "https://jobs.hamilton.ch/JR-5687",
-        "location": "Bonaduz, CH",
+        "job_url": "https://jobs.example.com/JR-5687",
+        "location": "Zurich, CH",
         "salary_range": "100k-120k CHF",
     }
     payload.update(overrides)
@@ -23,7 +23,7 @@ def _create_application(client, **overrides):
 def test_create_application_happy_path(client):
     body = _create_application(client)
 
-    assert body["company"] == "Hamilton AG"
+    assert body["company"] == "Northgate AG"
     assert body["stage"] == ApplicationStage.SAVED.value
     assert body["stage_changed_at"] is None
 

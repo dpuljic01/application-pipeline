@@ -5,12 +5,12 @@ from app.core.security.deps import CurrentUser, get_current_user
 
 def _create_company(client, **overrides):
     payload = {
-        "name": "Hamilton AG",
-        "website": "https://hamilton.ch",
+        "name": "Northgate AG",
+        "website": "https://northgate.example",
         "industry": "Medical devices",
         "size": "MID",
-        "location": "Bonaduz, CH",
-        "notes": "Found via jobs.ch",
+        "location": "Zurich, CH",
+        "notes": "Found via a referral",
     }
     payload.update(overrides)
     response = client.post("/api/companies", json=payload)
@@ -20,9 +20,9 @@ def _create_company(client, **overrides):
 
 def _create_application(client, **overrides):
     payload = {
-        "company": "Hamilton AG",
+        "company": "Northgate AG",
         "role_title": "Software Engineer",
-        "job_url": "https://jobs.hamilton.ch/JR-5687",
+        "job_url": "https://jobs.example.com/JR-5687",
     }
     payload.update(overrides)
     response = client.post("/api/applications", json=payload)
@@ -33,9 +33,9 @@ def _create_application(client, **overrides):
 def test_create_company_happy_path(client):
     body = _create_company(client)
 
-    assert body["name"] == "Hamilton AG"
+    assert body["name"] == "Northgate AG"
     assert body["size"] == "MID"
-    assert body["website"] == "https://hamilton.ch/"
+    assert body["website"] == "https://northgate.example/"
 
 
 def test_create_company_missing_required_field_returns_422(client):
@@ -49,17 +49,17 @@ def test_get_company_returns_404_for_unknown_id(client):
 
 
 def test_list_companies_and_search_is_case_insensitive(client):
-    _create_company(client, name="Hamilton AG")
-    _create_company(client, name="Google Zurich")
+    _create_company(client, name="Northgate AG")
+    _create_company(client, name="Acme Zurich")
 
     listed = client.get("/api/companies")
     assert listed.status_code == 200
     assert len(listed.json()) == 2
 
-    searched = client.get("/api/companies", params={"search": "hamilton"})
+    searched = client.get("/api/companies", params={"search": "northgate"})
     assert searched.status_code == 200
     assert len(searched.json()) == 1
-    assert searched.json()[0]["name"] == "Hamilton AG"
+    assert searched.json()[0]["name"] == "Northgate AG"
 
 
 def test_update_company_updates_only_provided_fields(client):
@@ -84,17 +84,17 @@ def test_delete_company_without_applications_succeeds(client):
 
 
 def test_delete_company_with_applications_returns_409(client):
-    company = _create_company(client, name="Hamilton AG")
-    _create_application(client, company="Hamilton AG")
+    company = _create_company(client, name="Northgate AG")
+    _create_application(client, company="Northgate AG")
 
     response = client.delete(f"/api/companies/{company['id']}")
     assert response.status_code == 409
 
 
 def test_two_applications_same_company_name_link_to_one_company(client):
-    first = _create_application(client, company="Hamilton AG")
+    first = _create_application(client, company="Northgate AG")
     second = _create_application(
-        client, company="hamilton ag", role_title="Backend Engineer"
+        client, company="northgate ag", role_title="Backend Engineer"
     )
 
     assert first["company_id"] is not None
@@ -105,10 +105,10 @@ def test_two_applications_same_company_name_link_to_one_company(client):
 
 
 def test_application_with_explicit_company_id_links_to_it(client):
-    company = _create_company(client, name="Hamilton AG")
+    company = _create_company(client, name="Northgate AG")
 
     application = _create_application(
-        client, company="Hamilton AG", company_id=company["id"]
+        client, company="Northgate AG", company_id=company["id"]
     )
 
     assert application["company_id"] == company["id"]
@@ -118,7 +118,7 @@ def test_application_with_unknown_company_id_returns_404(client):
     response = client.post(
         "/api/applications",
         json={
-            "company": "Hamilton AG",
+            "company": "Northgate AG",
             "role_title": "Software Engineer",
             "company_id": str(uuid.uuid4()),
         },
@@ -127,11 +127,11 @@ def test_application_with_unknown_company_id_returns_404(client):
 
 
 def test_list_applications_for_company(client):
-    company = _create_company(client, name="Hamilton AG")
-    _create_application(client, company="Hamilton AG", company_id=company["id"])
+    company = _create_company(client, name="Northgate AG")
+    _create_application(client, company="Northgate AG", company_id=company["id"])
     _create_application(
         client,
-        company="Hamilton AG",
+        company="Northgate AG",
         company_id=company["id"],
         role_title="Backend Engineer",
     )

@@ -74,9 +74,9 @@ MATCH_INSIGHTS_JSON = json.dumps(
 
 def _create_application(client, **overrides):
     payload = {
-        "company": "Hamilton AG",
+        "company": "Northgate AG",
         "role_title": "Software Engineer",
-        "job_url": "https://jobs.hamilton.ch/JR-5687",
+        "job_url": "https://jobs.example.com/JR-5687",
     }
     payload.update(overrides)
     response = client.post("/api/applications", json=payload)

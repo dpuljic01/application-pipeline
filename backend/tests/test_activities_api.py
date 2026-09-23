@@ -5,9 +5,9 @@ from app.core.security.deps import CurrentUser, get_current_user
 
 def _create_application(client, **overrides):
     payload = {
-        "company": "Hamilton AG",
+        "company": "Northgate AG",
         "role_title": "Software Engineer",
-        "job_url": "https://jobs.hamilton.ch/JR-5687",
+        "job_url": "https://jobs.example.com/JR-5687",
     }
     payload.update(overrides)
     response = client.post("/api/applications", json=payload)
