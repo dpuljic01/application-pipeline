@@ -1,13 +1,15 @@
+from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
 
+from app.db.mixins import utcnow
 from app.db.models.application import Application
 from app.db.models.profile import Profile
 from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
 from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
-from app.domain.errors import InvalidTransition, JDNotParsed, NotFound
+from app.domain.errors import InvalidStageDate, InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
 from app.services.followup_generator import generate_followup_email
 from app.services.jd_parser import ParsedJobDescription, parse_job_description
@@ -221,6 +223,7 @@ class ApplicationService:
         user_id: UUID,
         application_id: UUID,
         stage: ApplicationStage,
+        occurred_at: datetime | None = None,
     ):
         app = self.repository.get_for_user(
             user_id=user_id,
@@ -235,19 +238,32 @@ class ApplicationService:
         if stage not in ALLOWED_TRANSITIONS[app.stage]:
             raise InvalidTransition(f"Cannot transition from {app.stage} to {stage}")
 
+        if occurred_at is not None:
+            if occurred_at > utcnow():
+                raise InvalidStageDate("Stage date cannot be in the future")
+            if occurred_at < app.created_at:
+                raise InvalidStageDate(
+                    "Stage date cannot be before the application was created"
+                )
+
         from_stage = app.stage
 
         self.repository.update_stage(
             application=app,
             stage=stage,
+            occurred_at=occurred_at,
         )
         activity = self.activity_repository.create(
             application_id=app.id,
             activity_type=ActivityType.STAGE_CHANGE,
             note=f"{from_stage.value} -> {stage.value}",
+            occurred_at=occurred_at,
         )
         self.db.flush()
-        app.last_activity_at = activity.created_at
+        # Use occurred_at (the real event time), not created_at (row insert
+        # time) - otherwise backdating a transition would still bump
+        # last_activity_at to "now" and mask staleness for the follow-up badge.
+        app.last_activity_at = activity.occurred_at
 
         self.db.commit()
         self.db.refresh(app)

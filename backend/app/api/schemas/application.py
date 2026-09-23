@@ -22,6 +22,9 @@ class ApplicationCreate(BaseModel):
 
 class StageChangeRequest(BaseModel):
     stage: ApplicationStage
+    # Optional backdate for when the transition actually happened (e.g.
+    # logging an "applied" days after the fact). Omit to use now.
+    occurred_at: datetime | None = None
 
 
 class ApplicationUpdate(BaseModel):
@@ -30,7 +33,6 @@ class ApplicationUpdate(BaseModel):
     job_url: AnyHttpUrl | None = None
     location: str | None = None
     salary_range: str | None = None
-    stage_changed_at: datetime | None = None
 
 
 class ApplicationRead(BaseModel):

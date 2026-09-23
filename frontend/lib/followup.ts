@@ -4,7 +4,7 @@ import type { Application, ApplicationStage } from "@/lib/types";
 // hasn't been sent anywhere yet, OFFER is the candidate's own decision to
 // make, and terminal stages are done.
 const STALE_THRESHOLD_DAYS: Partial<Record<ApplicationStage, number>> = {
-  APPLIED: 14,
+  APPLIED: 10,
   INTERVIEW: 7,
 };
 

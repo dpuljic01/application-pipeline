@@ -53,11 +53,13 @@ class ActivityService:
             note=note,
             occurred_at=occurred_at,
         )
-        # ensure defaults (created_at) are assigned before using them
+        # ensure defaults (occurred_at) are assigned before using them
         self.db.flush()
 
-        # business rule: activity updates app timeline
-        app.last_activity_at = activity.created_at
+        # business rule: activity updates app timeline. Use occurred_at (the
+        # real event time), not created_at (row insert time) - otherwise a
+        # backdated activity would still bump last_activity_at to "now".
+        app.last_activity_at = activity.occurred_at
 
         self.db.commit()
         self.db.refresh(activity)

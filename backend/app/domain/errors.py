@@ -14,6 +14,10 @@ class InvalidTransition(DomainError):
     pass
 
 
+class InvalidStageDate(DomainError):
+    pass
+
+
 class CompanyHasApplications(DomainError):
     pass
 

@@ -14,6 +14,7 @@ from app.core.security.deps import CurrentUser, get_current_user
 from app.db.models.application import Application
 from app.domain.errors import (
     FollowUpGenerationError,
+    InvalidStageDate,
     InvalidTransition,
     JDNotParsed,
     JDParseError,
@@ -187,9 +188,12 @@ async def change_stage(
             user_id=current_user.user_id,
             application_id=application_id,
             stage=payload.stage,
+            occurred_at=payload.occurred_at,
         )
         return application
     except NotFound:
         raise HTTPException(status_code=404, detail="Not found")
     except InvalidTransition as e:
         raise HTTPException(status_code=409, detail=str(e))
+    except InvalidStageDate as e:
+        raise HTTPException(status_code=422, detail=str(e))

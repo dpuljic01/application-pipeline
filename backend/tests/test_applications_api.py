@@ -1,7 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from app.core.security.deps import CurrentUser, get_current_user
+from app.db.models.application import Application
 from app.domain.enums import ApplicationStage
 
 
@@ -75,9 +76,11 @@ def test_last_activity_at_updates_for_any_activity_type(client):
 
     fetched = client.get(f"/api/applications/{created['id']}").json()
     assert fetched["last_activity_at"] is not None
+    # Compared against occurred_at (the real event time), not created_at (row
+    # insert time) - a backdated activity must move last_activity_at with it.
     assert datetime.fromisoformat(
         fetched["last_activity_at"]
-    ) == datetime.fromisoformat(response.json()["created_at"])
+    ) == datetime.fromisoformat(response.json()["occurred_at"])
 
 
 def test_put_application_updates_only_provided_fields(client):
@@ -132,6 +135,60 @@ def test_stage_change_on_unknown_application_returns_404(client):
         json={"stage": ApplicationStage.APPLIED.value},
     )
     assert response.status_code == 404
+
+
+def test_stage_transition_can_be_backdated(client, db_session):
+    created = _create_application(client)
+    # Push created_at into the past so a 5-day backdate is legal - a freshly
+    # created row's created_at is ~now, which would otherwise make any
+    # backdate look like it precedes the application's own creation.
+    app = db_session.get(Application, uuid.UUID(created["id"]))
+    app.created_at = datetime.now(timezone.utc) - timedelta(days=10)
+    db_session.flush()
+
+    occurred_at = datetime.now(timezone.utc) - timedelta(days=5)
+
+    response = client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={
+            "stage": ApplicationStage.APPLIED.value,
+            "occurred_at": occurred_at.isoformat(),
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert datetime.fromisoformat(body["stage_changed_at"]) == occurred_at
+    # last_activity_at must move with the backdated date too, or the
+    # follow-up badge would look at "now" instead of the real event time.
+    assert datetime.fromisoformat(body["last_activity_at"]) == occurred_at
+
+
+def test_stage_transition_backdated_before_creation_returns_422(client):
+    created = _create_application(client)
+    occurred_at = datetime.now(timezone.utc) - timedelta(days=3650)
+
+    response = client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={
+            "stage": ApplicationStage.APPLIED.value,
+            "occurred_at": occurred_at.isoformat(),
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_stage_transition_backdated_in_future_returns_422(client):
+    created = _create_application(client)
+    occurred_at = datetime.now(timezone.utc) + timedelta(days=1)
+
+    response = client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={
+            "stage": ApplicationStage.APPLIED.value,
+            "occurred_at": occurred_at.isoformat(),
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_delete_application_succeeds(client):

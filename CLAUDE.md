@@ -83,6 +83,7 @@ Routes return ORM objects typed honestly (`-> Application`), FastAPI serializes 
 | `NotFound`      | 404         |
 | `Forbidden`     | 403         |
 | `InvalidTransition` | 409    |
+| `InvalidStageDate` | 422    |
 | `CompanyHasApplications` | 409 |
 | `JDNotParsed`   | 409         |
 | `JDParseError`  | 502         |

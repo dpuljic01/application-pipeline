@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -78,6 +79,7 @@ class ApplicationRepository:
         *,
         application: Application,
         stage: ApplicationStage,
+        occurred_at: datetime | None = None,
     ) -> None:
         application.stage = stage
-        application.stage_changed_at = utcnow()
+        application.stage_changed_at = occurred_at or utcnow()

@@ -19,16 +19,6 @@ import { updateApplication, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Application } from "@/lib/types";
 
-// <input type="date"> works in YYYY-MM-DD; convert to/from the ISO datetime
-// the API expects. Noon avoids a date rolling back a day across timezones.
-function toDateInputValue(iso: string | null): string {
-  return iso ? iso.slice(0, 10) : "";
-}
-
-function fromDateInputValue(value: string): string | null {
-  return value ? new Date(`${value}T12:00:00`).toISOString() : null;
-}
-
 export function EditApplicationDialog({
   application,
   onUpdated,
@@ -45,9 +35,6 @@ export function EditApplicationDialog({
   const [jobUrl, setJobUrl] = useState(application.job_url ?? "");
   const [location, setLocation] = useState(application.location ?? "");
   const [salaryRange, setSalaryRange] = useState(application.salary_range ?? "");
-  const [appliedDate, setAppliedDate] = useState(
-    toDateInputValue(application.stage_changed_at),
-  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +46,6 @@ export function EditApplicationDialog({
       setJobUrl(application.job_url ?? "");
       setLocation(application.location ?? "");
       setSalaryRange(application.salary_range ?? "");
-      setAppliedDate(toDateInputValue(application.stage_changed_at));
       setError(null);
     }
     setOpen(next);
@@ -77,7 +63,6 @@ export function EditApplicationDialog({
         job_url: jobUrl || null,
         location: location || null,
         salary_range: salaryRange || null,
-        stage_changed_at: fromDateInputValue(appliedDate),
       });
       onUpdated(updated);
       setOpen(false);
@@ -102,10 +87,7 @@ export function EditApplicationDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit application</DialogTitle>
-            <DialogDescription>
-              Adjust details, or backdate when this actually reached its current
-              stage — useful when you&apos;re logging something retroactively.
-            </DialogDescription>
+            <DialogDescription>Adjust the application&apos;s details.</DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-3">
@@ -163,17 +145,6 @@ export function EditApplicationDialog({
                   onChange={(e) => setSalaryRange(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="edit_applied_date" className="text-xs text-muted-foreground">
-                Stage date (when it reached &quot;{application.stage}&quot;)
-              </Label>
-              <Input
-                id="edit_applied_date"
-                type="date"
-                value={appliedDate}
-                onChange={(e) => setAppliedDate(e.target.value)}
-              />
             </div>
           </div>
 

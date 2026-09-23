@@ -3,11 +3,11 @@ import type {
   ActivityCreateInput,
   Application,
   ApplicationCreateInput,
-  ApplicationStage,
   ApplicationUpdateInput,
   ParsedJobDescription,
   Profile,
   ProfileUpdateInput,
+  StageChangeInput,
 } from "@/lib/types";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
@@ -154,10 +154,10 @@ export function updateProfile(
 export function changeApplicationStage(
   token: string,
   applicationId: string,
-  stage: ApplicationStage,
+  input: StageChangeInput,
 ): Promise<Application> {
   return request<Application>(`/applications/${applicationId}/stage`, token, {
     method: "PATCH",
-    body: JSON.stringify({ stage }),
+    body: JSON.stringify(input),
   });
 }

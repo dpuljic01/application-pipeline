@@ -108,7 +108,13 @@ export interface ApplicationUpdateInput {
   job_url?: string | null;
   location?: string | null;
   salary_range?: string | null;
-  stage_changed_at?: string | null;
+}
+
+export interface StageChangeInput {
+  stage: ApplicationStage;
+  // Optional backdate for when the transition actually happened. Omit to
+  // use now.
+  occurred_at?: string | null;
 }
 
 // Mirrors ActivityType in backend/app/domain/enums.py
