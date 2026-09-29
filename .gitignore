@@ -26,11 +26,9 @@ ENV/
 env/
 
 # =====================
-# Poetry
+# uv
 # =====================
-# Keep poetry.lock COMMITTED
-# Do NOT ignore poetry.lock
-.poetry/
+# Keep uv.lock COMMITTED
 .ruff_cache/
 
 # =====================

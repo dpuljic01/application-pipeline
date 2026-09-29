@@ -125,8 +125,7 @@ Backend **never** trusts frontend claims.
 ### Prerequisites
 
 * Docker Desktop (runs Postgres)
-* Python 3.11+
-* [Poetry](https://python-poetry.org/) for dependency management
+* [uv](https://docs.astral.sh/uv/) for Python + dependency management (installs Python 3.11 itself from `backend/.python-version` if you don't have it)
 
 ### Backend
 
@@ -140,14 +139,14 @@ docker compose up -d
 cp .env.example .env
 # then fill in COGNITO_REGION / COGNITO_USER_POOL_ID / COGNITO_APP_CLIENT_ID
 
-# 3. Install dependencies
-poetry install
+# 3. Install dependencies (creates backend/.venv from uv.lock)
+uv sync
 
 # 4. Run database migrations
-poetry run alembic upgrade head
+uv run alembic upgrade head
 
 # 5. Start the API
-poetry run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 The API is now running at `http://localhost:8000` (interactive docs at `/docs`). Confirm it's talking to Postgres:
@@ -161,7 +160,7 @@ curl http://localhost:8000/api/health
 
 ```bash
 cd backend
-poetry run pytest
+uv run pytest
 ```
 
 Tests run against the same local Postgres instance — each test runs inside a transaction that's rolled back at teardown, so nothing persists and no separate test database is needed. Full suite runs in well under a second.
@@ -170,11 +169,11 @@ Tests run against the same local Postgres instance — each test runs inside a t
 
 ```bash
 cd backend
-poetry run ruff check . --fix
-poetry run ruff format .
+uv run ruff check . --fix
+uv run ruff format .
 ```
 
-A pre-commit hook runs both automatically on every commit. Enable it once per clone with `poetry run pre-commit install` (from `backend/`).
+A pre-commit hook runs both automatically on every commit. Enable it once per clone with `uv run pre-commit install` (from `backend/`).
 
 ### CI
 
@@ -208,7 +207,7 @@ This is the actual always-on deployment — simpler than the AWS path below, and
 2. Create a [Neon](https://neon.tech) Postgres project and paste its connection string into Render's `DATABASE_URL` env var (`sync: false` in `render.yaml` — set manually, not committed).
 3. Set the other `sync: false` env vars in the Render dashboard: `CORS_ORIGINS` (the Vercel frontend's origin), `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`, `ADZUNA_APP_ID`/`ADZUNA_APP_KEY`.
 4. Custom domain: add `api.puljic.ch` under the Render service's Settings → Custom Domains, then add a CNAME record for `api` in your DNS provider pointing at the target Render gives you. Render auto-issues a Let's Encrypt cert once DNS resolves — usually a few minutes.
-5. **Run migrations against Neon after every deploy that adds one** — Render does not do this automatically: `DATABASE_URL="<neon connection string>" poetry run alembic upgrade head` from `backend/`, or via Neon's own SQL editor. Skipping this is a real, repeatable failure mode: it 500s `GET /applications` (and anything else touching the changed table) until the migration runs, and it's bitten this project twice already (Day 9's `parsed_jd` column, Day 10's `match_score`/`match_details`).
+5. **Migrations run automatically on every deploy** — the container's start command is `alembic upgrade head && exec uvicorn ...` (see `backend/Dockerfile`). Render doesn't run migrations itself, and before this, shipping code ahead of its schema 500'd `GET /applications` in production twice (Day 9's `parsed_jd` column, Day 10's `match_score`/`match_details`). A failed migration exits the container, so the health check fails the deploy and Render keeps the previous version live. To run one by hand anyway: `DATABASE_URL="<neon connection string>" uv run alembic upgrade head` from `backend/`.
 
 **Frontend (Vercel):**
 1. Import this repo as a Vercel project (root: `frontend/`).

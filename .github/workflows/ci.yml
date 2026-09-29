@@ -38,30 +38,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.11"
+          version: "0.12.19"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
 
-      - name: Install Poetry
-        run: pipx install poetry
-
-      - name: Cache Poetry virtualenv
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pypoetry/virtualenvs
-          key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
-
+      # installs the Python version from backend/.python-version if needed
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: uv sync --frozen
 
       - name: Lint (ruff check)
-        run: poetry run ruff check .
+        run: uv run ruff check .
 
       - name: Format check (ruff format)
-        run: poetry run ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Run migrations
-        run: poetry run alembic upgrade head
+        run: uv run alembic upgrade head
 
       - name: Run tests
-        run: poetry run pytest -v
+        run: uv run pytest -v

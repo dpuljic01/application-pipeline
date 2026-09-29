@@ -14,24 +14,24 @@ All backend work runs from the `backend/` directory.
 # Start Postgres
 cd backend && docker compose up -d
 
-# Install dependencies (uses Poetry)
-cd backend && poetry install
+# Install dependencies (uses uv; creates backend/.venv from uv.lock)
+cd backend && uv sync
 
 # Run the API (from backend/)
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 
-# Run migrations (from backend/)
-alembic upgrade head
+# Run migrations (from backend/) — deployed containers also run this on startup
+uv run alembic upgrade head
 
 # Generate a new migration (from backend/)
-alembic revision --autogenerate -m "description"
+uv run alembic revision --autogenerate -m "description"
 
-# Lint and format
-ruff check backend/ --fix
-ruff format backend/
+# Lint and format (from backend/)
+uv run ruff check . --fix
+uv run ruff format .
 
 # Run tests
-cd backend && pytest
+cd backend && uv run pytest
 ```
 
 Pre-commit hooks run `ruff` (lint + format) on `backend/` on every commit.
