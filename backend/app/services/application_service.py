@@ -84,6 +84,15 @@ class ApplicationService:
         self.db.refresh(app)
         return app
 
+    @staticmethod
+    def _validate_stage_date(*, app: Application, occurred_at: datetime) -> None:
+        if occurred_at > utcnow():
+            raise InvalidStageDate("Stage date cannot be in the future")
+        if occurred_at < app.created_at:
+            raise InvalidStageDate(
+                "Stage date cannot be before the application was created"
+            )
+
     def update_application(
         self,
         *,
@@ -97,6 +106,20 @@ class ApplicationService:
         )
         if not app:
             raise NotFound("Application not found")
+
+        if "stage_changed_at" in data:
+            new_stage_date = data["stage_changed_at"]
+            if new_stage_date is None:
+                raise InvalidStageDate("Stage date cannot be cleared")
+            self._validate_stage_date(app=app, occurred_at=new_stage_date)
+            # If the stage change was the latest activity, move
+            # last_activity_at with it so the follow-up badge reflects the
+            # corrected date.
+            if (
+                app.stage_changed_at is not None
+                and app.last_activity_at == app.stage_changed_at
+            ):
+                app.last_activity_at = new_stage_date
 
         self.repository.update(
             application=app,
@@ -239,12 +262,12 @@ class ApplicationService:
             raise InvalidTransition(f"Cannot transition from {app.stage} to {stage}")
 
         if occurred_at is not None:
-            if occurred_at > utcnow():
-                raise InvalidStageDate("Stage date cannot be in the future")
-            if occurred_at < app.created_at:
-                raise InvalidStageDate(
-                    "Stage date cannot be before the application was created"
-                )
+            self._validate_stage_date(app=app, occurred_at=occurred_at)
+        else:
+            # One timestamp for stage_changed_at and the activity, so
+            # update_application can tell whether the stage change is still
+            # the latest activity when the stage date is later corrected.
+            occurred_at = utcnow()
 
         from_stage = app.stage
 

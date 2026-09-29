@@ -24,16 +24,7 @@ import { ALLOWED_TRANSITIONS } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { changeApplicationStage, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-
-// <input type="date"> works in YYYY-MM-DD; convert to the ISO datetime the
-// API expects. Noon avoids a date rolling back a day across timezones.
-function todayDateInputValue(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function fromDateInputValue(value: string): string {
-  return new Date(`${value}T12:00:00`).toISOString();
-}
+import { fromDateInputValue, toDateInputValue, todayDateInputValue } from "@/lib/stage-date";
 
 export function StageChangeMenu({
   application,
@@ -69,7 +60,7 @@ export function StageChangeMenu({
     try {
       const updated = await changeApplicationStage(idToken, application.id, {
         stage: pendingStage,
-        occurred_at: fromDateInputValue(occurredDate),
+        occurred_at: fromDateInputValue(occurredDate, application.created_at),
       });
       onChanged(updated);
       setDialogOpen(false);
@@ -136,6 +127,7 @@ export function StageChangeMenu({
                 id="stage_occurred_date"
                 type="date"
                 required
+                min={toDateInputValue(application.created_at)}
                 max={todayDateInputValue()}
                 value={occurredDate}
                 onChange={(e) => setOccurredDate(e.target.value)}

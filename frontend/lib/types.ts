@@ -108,6 +108,8 @@ export interface ApplicationUpdateInput {
   job_url?: string | null;
   location?: string | null;
   salary_range?: string | null;
+  // Only sent when the user changed it - see EditApplicationDialog.
+  stage_changed_at?: string;
 }
 
 export interface StageChangeInput {

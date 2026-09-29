@@ -33,6 +33,10 @@ class ApplicationUpdate(BaseModel):
     job_url: AnyHttpUrl | None = None
     location: str | None = None
     salary_range: str | None = None
+    # Corrects when the current stage was reached. The frontend only sends
+    # this when the user actually changed it, so unrelated edits can't
+    # overwrite it with a stale cached value.
+    stage_changed_at: datetime | None = None
 
 
 class ApplicationRead(BaseModel):

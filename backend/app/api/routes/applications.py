@@ -91,6 +91,8 @@ async def update_application(
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Application not found")
+    except InvalidStageDate as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.delete("/{application_id}", status_code=204)

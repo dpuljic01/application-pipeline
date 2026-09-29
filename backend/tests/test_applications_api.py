@@ -218,3 +218,58 @@ def test_user_cannot_see_another_users_application(client):
 
     response = client.get(f"/api/applications/{created['id']}")
     assert response.status_code == 404
+
+
+def test_stage_transition_on_creation_day_is_allowed(client, db_session):
+    # Saved and applied on the same day: the frontend clamps the picked
+    # date to created_at, which must be accepted (boundary, not before).
+    created = _create_application(client)
+
+    response = client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={
+            "stage": ApplicationStage.APPLIED.value,
+            "occurred_at": created["created_at"],
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_put_can_correct_stage_date(client, db_session):
+    created = _create_application(client)
+    app = db_session.get(Application, uuid.UUID(created["id"]))
+    app.created_at = datetime.now(timezone.utc) - timedelta(days=10)
+    db_session.flush()
+    client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={"stage": ApplicationStage.APPLIED.value},
+    )
+
+    corrected = datetime.now(timezone.utc) - timedelta(days=4)
+    response = client.put(
+        f"/api/applications/{created['id']}",
+        json={"stage_changed_at": corrected.isoformat()},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert datetime.fromisoformat(body["stage_changed_at"]) == corrected
+    # The stage change was the latest activity, so it moves too.
+    assert datetime.fromisoformat(body["last_activity_at"]) == corrected
+
+
+def test_put_stage_date_before_creation_returns_422(client):
+    created = _create_application(client)
+    client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={"stage": ApplicationStage.APPLIED.value},
+    )
+
+    response = client.put(
+        f"/api/applications/{created['id']}",
+        json={
+            "stage_changed_at": (
+                datetime.now(timezone.utc) - timedelta(days=3650)
+            ).isoformat()
+        },
+    )
+    assert response.status_code == 422

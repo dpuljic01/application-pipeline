@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateApplication, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { Application } from "@/lib/types";
+import { fromDateInputValue, toDateInputValue, todayDateInputValue } from "@/lib/stage-date";
+import type { Application, ApplicationUpdateInput } from "@/lib/types";
 
 export function EditApplicationDialog({
   application,
@@ -35,6 +36,10 @@ export function EditApplicationDialog({
   const [jobUrl, setJobUrl] = useState(application.job_url ?? "");
   const [location, setLocation] = useState(application.location ?? "");
   const [salaryRange, setSalaryRange] = useState(application.salary_range ?? "");
+  const initialStageDate = application.stage_changed_at
+    ? toDateInputValue(application.stage_changed_at)
+    : "";
+  const [stageDate, setStageDate] = useState(initialStageDate);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +51,7 @@ export function EditApplicationDialog({
       setJobUrl(application.job_url ?? "");
       setLocation(application.location ?? "");
       setSalaryRange(application.salary_range ?? "");
+      setStageDate(initialStageDate);
       setError(null);
     }
     setOpen(next);
@@ -57,13 +63,19 @@ export function EditApplicationDialog({
     setPending(true);
     setError(null);
     try {
-      const updated = await updateApplication(idToken, application.id, {
+      const input: ApplicationUpdateInput = {
         company,
         role_title: roleTitle,
         job_url: jobUrl || null,
         location: location || null,
         salary_range: salaryRange || null,
-      });
+      };
+      // Only send the stage date when the user actually changed it, so an
+      // unrelated edit can't overwrite it with a stale value.
+      if (stageDate && stageDate !== initialStageDate) {
+        input.stage_changed_at = fromDateInputValue(stageDate, application.created_at);
+      }
+      const updated = await updateApplication(idToken, application.id, input);
       onUpdated(updated);
       setOpen(false);
     } catch (err) {
@@ -146,6 +158,22 @@ export function EditApplicationDialog({
                 />
               </div>
             </div>
+            {initialStageDate && (
+              <div className="space-y-1.5">
+                <Label htmlFor="edit_stage_date" className="text-xs text-muted-foreground">
+                  Stage date (when it reached &quot;{application.stage}&quot;)
+                </Label>
+                <Input
+                  id="edit_stage_date"
+                  type="date"
+                  required
+                  min={toDateInputValue(application.created_at)}
+                  max={todayDateInputValue()}
+                  value={stageDate}
+                  onChange={(e) => setStageDate(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           {error && (
