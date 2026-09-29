@@ -223,13 +223,19 @@ def test_user_cannot_see_another_users_application(client):
 def test_stage_transition_on_creation_day_is_allowed(client, db_session):
     # Saved and applied on the same day: the frontend clamps the picked
     # date to created_at, which must be accepted (boundary, not before).
+    # Send it the way a browser does - truncated to milliseconds, which is
+    # slightly *before* the microsecond-precision created_at.
     created = _create_application(client)
+    created_at = datetime.fromisoformat(created["created_at"])
+    as_js_date = created_at.replace(
+        microsecond=created_at.microsecond // 1000 * 1000
+    ).isoformat(timespec="milliseconds")
 
     response = client.patch(
         f"/api/applications/{created['id']}/stage",
         json={
             "stage": ApplicationStage.APPLIED.value,
-            "occurred_at": created["created_at"],
+            "occurred_at": as_js_date,
         },
     )
     assert response.status_code == 200

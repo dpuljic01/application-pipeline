@@ -88,7 +88,13 @@ class ApplicationService:
     def _validate_stage_date(*, app: Application, occurred_at: datetime) -> None:
         if occurred_at > utcnow():
             raise InvalidStageDate("Stage date cannot be in the future")
-        if occurred_at < app.created_at:
+        # Compare at millisecond precision: created_at has microseconds, but
+        # a browser Date only has milliseconds, so a client clamping to
+        # created_at sends a value up to 999us *before* it.
+        created_ms = app.created_at.replace(
+            microsecond=app.created_at.microsecond // 1000 * 1000
+        )
+        if occurred_at < created_ms:
             raise InvalidStageDate(
                 "Stage date cannot be before the application was created"
             )
