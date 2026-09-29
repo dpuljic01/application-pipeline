@@ -5,10 +5,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.orm import sessionmaker
 
+from app.api.deps import get_llm_provider
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.base import Base
 from app.db.models import User
 from app.db.session import engine, get_db
+from app.integrations.llm.base import DisabledLLMProvider
 from app.main import app
 
 
@@ -67,6 +69,10 @@ def client(db_session, test_user):
         cognito_sub=test_user.cognito_sub,
         email=test_user.email,
     )
+    # Never reach a real LLM provider from tests - without this, any test that
+    # doesn't install its own fake builds the real Gemini client, which only
+    # works where a GEMINI_API_KEY happens to be set (locally, not in CI).
+    app.dependency_overrides[get_llm_provider] = lambda: DisabledLLMProvider()
 
     with TestClient(app) as test_client:
         yield test_client
