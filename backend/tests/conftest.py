@@ -6,6 +6,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import sessionmaker
 
 from app.api.deps import get_llm_provider
+from app.core.config import settings
 from app.core.security.deps import CurrentUser, get_current_user
 from app.db.base import Base
 from app.db.models import User
@@ -20,6 +21,13 @@ def _tables():
     # already has the schema applied via Alembic - safe to run every session.
     Base.metadata.create_all(bind=engine)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _no_llm_budget(monkeypatch):
+    # Tests share the dev database, so real usage logged today could
+    # otherwise trip the daily budget mid-suite. Budget tests opt back in.
+    monkeypatch.setattr(settings, "LLM_DAILY_BUDGET_USD", None)
 
 
 @pytest.fixture()

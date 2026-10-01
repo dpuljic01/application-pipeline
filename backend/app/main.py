@@ -16,6 +16,7 @@ from app.domain.errors import (
     InvalidTransition,
     JDNotParsed,
     JDParseError,
+    LLMBudgetExceeded,
     MatchingError,
     NotFound,
 )
@@ -49,6 +50,7 @@ _DOMAIN_ERROR_STATUS: dict[type[DomainError], int] = {
     JDNotParsed: 409,
     MatchingError: 502,
     FollowUpGenerationError: 502,
+    LLMBudgetExceeded: 503,
 }
 
 

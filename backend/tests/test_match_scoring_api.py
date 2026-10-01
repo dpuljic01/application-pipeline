@@ -11,6 +11,8 @@ class FakeLLMProvider:
     response_schema is requested, so the same fake can answer both
     parse-jd and score calls in one test."""
 
+    name = "gemini"
+
     def __init__(self, *, responses: dict[str, str], raise_error: bool = False):
         self.responses = responses
         self.raise_error = raise_error
@@ -33,7 +35,7 @@ class FakeLLMProvider:
         )
         return LLMResponse(
             content=content,
-            provider="fake",
+            provider="gemini",
             model="fake-model",
             prompt_tokens=1,
             completion_tokens=1,

@@ -19,6 +19,8 @@ PROVIDER_NAME = "gemini"
 
 
 class GeminiProvider:
+    name = PROVIDER_NAME
+
     def __init__(
         self, *, api_key: str, timeout_seconds: float = 30.0, max_attempts: int = 3
     ):

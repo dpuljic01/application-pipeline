@@ -20,6 +20,10 @@ class LLMResponse(BaseModel):
 
 
 class LLMProvider(Protocol):
+    # Identifies the provider independently of any one response - needed to
+    # record failed calls (no LLMResponse exists) and to key caches.
+    name: str
+
     def complete(
         self,
         *,
@@ -44,6 +48,8 @@ class DisabledLLMProvider:
     """Returned by the factory when LLM_ENABLED=false. Never calls out to a
     real provider, so callers can run the same code path in environments
     with no API key configured."""
+
+    name = "disabled"
 
     def complete(
         self,

@@ -7,6 +7,8 @@ from app.integrations.llm.base import LLMProviderError, LLMResponse
 
 
 class FakeLLMProvider:
+    name = "gemini"
+
     def __init__(self, *, content: str = "", raise_error: bool = False):
         self.content = content
         self.raise_error = raise_error
@@ -26,7 +28,7 @@ class FakeLLMProvider:
 
         return LLMResponse(
             content=self.content,
-            provider="fake",
+            provider="gemini",
             model="fake-model",
             prompt_tokens=1,
             completion_tokens=1,

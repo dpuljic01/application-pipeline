@@ -12,6 +12,8 @@ PROVIDER_NAME = "cerebras"
 
 
 class CerebrasProvider:
+    name = PROVIDER_NAME
+
     def __init__(
         self, *, api_key: str, timeout_seconds: float = 30.0, max_retries: int = 2
     ):

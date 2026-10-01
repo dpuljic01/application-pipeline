@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_application_service, get_llm_provider, get_profile_service
+from app.api.deps import get_application_service, get_profile_service, tracked_llm
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
@@ -18,6 +18,7 @@ from app.domain.errors import (
     InvalidTransition,
     JDNotParsed,
     JDParseError,
+    LLMBudgetExceeded,
     MatchingError,
     NotFound,
 )
@@ -116,7 +117,7 @@ async def parse_jd(
     payload: ParseJDRequest,
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
-    llm: LLMProvider = Depends(get_llm_provider),
+    llm: LLMProvider = Depends(tracked_llm("parse_jd")),
 ) -> ParsedJobDescription:
     try:
         return service.parse_jd(
@@ -129,6 +130,8 @@ async def parse_jd(
         raise HTTPException(status_code=404, detail="Application not found")
     except JDParseError as e:
         raise HTTPException(status_code=502, detail=str(e))
+    except LLMBudgetExceeded as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @router.post("/{application_id}/score", response_model=ApplicationRead)
@@ -137,7 +140,7 @@ async def score_application(
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
     profile_service: ProfileService = Depends(get_profile_service),
-    llm: LLMProvider = Depends(get_llm_provider),
+    llm: LLMProvider = Depends(tracked_llm("match_insights")),
 ) -> Application:
     profile = profile_service.get_or_create_profile_for_user(
         user_id=current_user.user_id
@@ -155,6 +158,8 @@ async def score_application(
         raise HTTPException(status_code=409, detail=str(e))
     except MatchingError as e:
         raise HTTPException(status_code=502, detail=str(e))
+    except LLMBudgetExceeded as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @router.post("/{application_id}/generate-followup", response_model=ApplicationRead)
@@ -163,7 +168,7 @@ async def generate_followup(
     payload: GenerateFollowUpRequest,
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
-    llm: LLMProvider = Depends(get_llm_provider),
+    llm: LLMProvider = Depends(tracked_llm("generate_followup")),
 ) -> Application:
     try:
         return service.generate_followup(
@@ -176,6 +181,8 @@ async def generate_followup(
         raise HTTPException(status_code=404, detail="Application not found")
     except FollowUpGenerationError as e:
         raise HTTPException(status_code=502, detail=str(e))
+    except LLMBudgetExceeded as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @router.patch("/{application_id}/stage", response_model=ApplicationRead)

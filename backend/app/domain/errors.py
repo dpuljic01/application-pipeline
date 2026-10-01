@@ -36,3 +36,7 @@ class MatchingError(DomainError):
 
 class FollowUpGenerationError(DomainError):
     pass
+
+
+class LLMBudgetExceeded(DomainError):
+    pass

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
     CEREBRAS_API_KEY: str | None = None
+    # Global (all users) daily LLM spend cap, checked against llm_usage
+    # before every call. None disables the check.
+    LLM_DAILY_BUDGET_USD: float | None = 1.0
 
     ADZUNA_APP_ID: str | None = None
     ADZUNA_APP_KEY: str | None = None

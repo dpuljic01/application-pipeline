@@ -1,5 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.llm_usage import LLMUsage
@@ -38,3 +40,11 @@ class LLMUsageRepository:
         )
         self.db.add(usage)
         return usage
+
+    def total_cost_since(self, *, since: datetime) -> Decimal:
+        total = self.db.scalar(
+            select(func.coalesce(func.sum(LLMUsage.cost_usd), 0)).where(
+                LLMUsage.created_at >= since
+            )
+        )
+        return Decimal(total)
