@@ -30,6 +30,7 @@ PROFILE = {
         "FastAPI",
         "Django",
         "PostgreSQL",
+        "SQL",
         "SQLAlchemy",
         "Docker",
         "AWS",

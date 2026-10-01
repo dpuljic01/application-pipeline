@@ -2,7 +2,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from app.db.repositories.llm_cache_repo import LLMCacheRepository
 from app.domain.errors import JDParseError
@@ -15,6 +15,19 @@ from app.integrations.llm.base import LLMProvider, LLMProviderError, LLMTimeoutE
 # domain data - api/schemas imports FROM here, not the other way around.
 Seniority = Literal["junior", "mid", "senior", "staff"]
 SalaryConfidence = Literal["stated", "estimated", "unknown"]
+# CEFR plus "native". Ordered lowest to highest - matcher.py ranks by index.
+LanguageLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2", "native"]
+LANGUAGE_LEVEL_ORDER: list[str] = list(LanguageLevel.__args__)
+
+
+class LanguageRequirement(BaseModel):
+    language: str = Field(description="e.g. 'German', 'English'")
+    min_level: LanguageLevel | None = Field(
+        description="Minimum level the posting asks for, or null if no level is stated"
+    )
+    required: bool = Field(
+        description="false when the posting calls it a plus / von Vorteil / nice to have"
+    )
 
 
 class ParsedJobDescription(BaseModel):
@@ -30,6 +43,13 @@ class ParsedJobDescription(BaseModel):
 
     required_skills: list[str]
     nice_to_have_skills: list[str]
+    core_skills: list[str] = Field(
+        description=(
+            "The 1-3 skills the role is built around - the main programming "
+            "language(s) and, only if central, the main framework. Every entry "
+            "must also appear in required_skills or tech_stack."
+        )
+    )
 
     seniority_claimed: str | None = Field(
         description=(
@@ -45,8 +65,8 @@ class ParsedJobDescription(BaseModel):
     )
 
     tech_stack: list[str]
-    languages: list[str] = Field(
-        description="Spoken/written languages required, e.g. 'German', 'English'"
+    languages: list[LanguageRequirement] = Field(
+        description="Spoken/written language requirements, not programming languages"
     )
     years_experience_min: int | None
     remote_policy: str | None
@@ -60,6 +80,23 @@ class ParsedJobDescription(BaseModel):
     )
     summary: str = Field(description="One-sentence summary of the role")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _upgrade_legacy_shape(cls, data):
+        """Parses stored before core_skills/language levels existed (in
+        applications.parsed_jd and llm_cache) still load: no core skills,
+        and plain language names become required with unknown level."""
+        if isinstance(data, dict):
+            data = dict(data)
+            data.setdefault("core_skills", [])
+            data["languages"] = [
+                {"language": lang, "min_level": None, "required": True}
+                if isinstance(lang, str)
+                else lang
+                for lang in data.get("languages", [])
+            ]
+        return data
+
 
 # Shared with services/cv_extractor.py. The matcher compares skills by exact
 # (lowercased) string, so a CV saying "Postgres" and a posting saying
@@ -68,9 +105,13 @@ class ParsedJobDescription(BaseModel):
 SKILL_NAMING_RULES = """\
 Skill names: use the most common canonical name for each skill, one skill
 per entry - e.g. "PostgreSQL" not "Postgres"/"psql", "Kubernetes" not "k8s",
-"JavaScript" not "JS", "AWS" for Amazon Web Services in general but keep
-specific services separate ("AWS Lambda"). No versions ("Python", not
-"Python 3.11"), no proficiency words ("Docker", not "Docker (advanced)").
+"JavaScript" not "JS". Cloud services always carry the provider prefix: "AWS"
+for Amazon Web Services in general, "AWS ECS", "AWS Lambda", "AWS RDS" for
+specific services (likewise "Azure ...", "GCP ..."). No versions ("Python",
+not "Python 3.11"), no proficiency words ("Docker", not "Docker (advanced)").
+Skills are concrete technologies only - languages, frameworks, databases,
+tools, platforms. Leave out practices and concepts such as "CI/CD", "data
+modelling", "distributed systems", "microservices", "agile".
 """
 
 SYSTEM_PROMPT = (
@@ -91,11 +132,27 @@ must-have — flag it as a red flag. "Sehr gute" or "gute Deutschkenntnisse" is
 frequently overstated in Swiss/DACH postings, and teams often function fine in
 English — do not flag this on its own.
 
+`tech_stack` is the technology the team actually uses; skills the posting
+calls nice-to-have belong in `nice_to_have_skills` only, never in
+`tech_stack` or `required_skills`.
+
 Other red flags: missing salary range, vague work-permit requirements, unpaid
 trial periods, and requirements mismatched with the stated seniority.
 
 `languages` lists only spoken/written language requirements — do not duplicate
-them into `required_skills`.
+them into `required_skills`. Map the stated level to CEFR: "fliessend",
+"verhandlungssicher", "fluent", "business fluent" -> C2; "sehr gute", "very
+good", "excellent" -> C1; "gute", "good" -> B2; "Grundkenntnisse", "basic" ->
+A2; "Muttersprache", "native" -> native; an explicit CEFR level as written;
+no level stated -> null. Set required=false when the language is only "a
+plus", "von Vorteil", "nice to have" or similar.
+
+`core_skills`: the one to three skills a candidate could not do this job
+without - normally the main programming language(s). If the posting accepts
+alternatives ("Python or Go"), leave them out: core_skills is only for skills
+with no substitute, and may be empty. For non-programming roles
+(e.g. pure infrastructure), use the central platform instead (e.g.
+"Kubernetes").
 
 """
     + SKILL_NAMING_RULES

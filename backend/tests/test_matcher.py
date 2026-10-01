@@ -4,7 +4,9 @@ from app.db.models.profile import Profile
 from app.services.jd_parser import ParsedJobDescription
 from app.services.matcher import (
     compute_rule_based_components,
+    compute_rule_score,
     parse_salary_midpoint_chf,
+    profile_language_level,
 )
 
 
@@ -243,3 +245,183 @@ def test_compute_rule_based_components_total_never_exceeds_100():
     components = compute_rule_based_components(profile=profile, parsed_jd=jd)
     total = sum(c["score"] for c in components.values())
     assert 0 <= total <= 100
+
+
+# --- language levels ------------------------------------------------------
+
+
+def _lang_req(language, min_level, required=True):
+    return {"language": language, "min_level": min_level, "required": required}
+
+
+@pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        ("Native", "native"),
+        ("Fluent (C2)", "C2"),
+        ("Advanced (C1)", "C1"),
+        ("Upper-Intermediate (B2)", "B2"),
+        ("Intermediate (B1)", "B1"),
+        ("upper intermediate", "B2"),
+        ("verhandlungssicher", "C2"),
+        ("b1", "B1"),
+        ("conversational-ish", None),
+    ],
+)
+def test_profile_language_level(label, expected):
+    assert profile_language_level(label) == expected
+
+
+@pytest.mark.parametrize(
+    ("required", "have", "score"),
+    [
+        ("C2", "Native", 15),  # exceeds
+        ("C2", "Fluent (C2)", 15),  # meets
+        ("C2", "Advanced (C1)", 8),  # one level short -> half credit (7.5)
+        ("C2", "Intermediate (B1)", 0),  # fluent German vs B1: the demo bug
+        (None, "Beginner (A1)", 15),  # posting states no level
+        ("C1", "some german", 15),  # unreadable profile level is neutral
+    ],
+)
+def test_language_score_compares_levels(required, have, score):
+    profile = make_profile(languages=[{"language": "German", "level": have}])
+    jd = make_jd(languages=[_lang_req("German", required)])
+    assert (
+        compute_rule_based_components(profile=profile, parsed_jd=jd)["language"][
+            "score"
+        ]
+        == score
+    )
+
+
+def test_preferred_languages_cost_nothing():
+    profile = make_profile(languages=[{"language": "English", "level": "Native"}])
+    jd = make_jd(
+        languages=[
+            _lang_req("English", "C1"),
+            _lang_req("German", "B2", required=False),
+        ]
+    )
+    assert (
+        compute_rule_based_components(profile=profile, parsed_jd=jd)["language"][
+            "score"
+        ]
+        == 15
+    )
+
+
+def test_missing_required_language_scores_zero_for_it():
+    profile = make_profile(languages=[{"language": "English", "level": "Native"}])
+    jd = make_jd(languages=[_lang_req("English", "C1"), _lang_req("French", "B2")])
+    component = compute_rule_based_components(profile=profile, parsed_jd=jd)["language"]
+    assert component["score"] == 8  # 15 * 0.5, rounded
+    assert component["requirements"][1]["your_level"] == "missing"
+
+
+# --- skill gate + core-skill cap -------------------------------------------
+
+
+def _total(profile, jd):
+    components = compute_rule_based_components(profile=profile, parsed_jd=jd)
+    return compute_rule_score(profile=profile, components=components)
+
+
+def test_good_stack_match_is_not_gated():
+    total, adjustments = _total(make_profile(), make_jd(core_skills=["Python"]))
+    assert adjustments == []
+    assert total > 80
+
+
+def test_weak_stack_match_scales_down_everything_else():
+    # 1 of 5 required skills (20%): non-skill points count 20/60 = a third.
+    profile = make_profile(skills=["Docker"])
+    jd = make_jd(
+        required_skills=["Java", "Spring Boot", "Kafka", "Oracle", "Docker"],
+        tech_stack=[],
+        nice_to_have_skills=[],
+    )
+    components = compute_rule_based_components(profile=profile, parsed_jd=jd)
+    others = sum(c["score"] for n, c in components.items() if n != "skills")
+
+    total, adjustments = compute_rule_score(profile=profile, components=components)
+
+    assert total == components["skills"]["score"] + round(others / 3)
+    assert "20% of required skills" in adjustments[0]
+
+
+def test_missing_core_skill_caps_total_even_with_a_decent_ratio():
+    # Knows 4 of 5 required (80%, no gate) but not Go, the language of the job.
+    profile = make_profile(skills=["Docker", "Kubernetes", "PostgreSQL", "AWS"])
+    jd = make_jd(
+        required_skills=["Go", "Docker", "Kubernetes", "PostgreSQL", "AWS"],
+        tech_stack=[],
+        core_skills=["Go"],
+    )
+
+    total, adjustments = _total(profile, jd)
+
+    assert total == 35
+    assert any("Missing core skill (Go)" in a for a in adjustments)
+
+
+def test_core_skill_match_is_case_insensitive():
+    profile = make_profile(skills=["python", "FastAPI"])
+    total, adjustments = _total(profile, make_jd(core_skills=["Python"]))
+    assert adjustments == []
+
+
+def test_empty_profile_skills_are_not_gated_or_capped():
+    profile = make_profile(skills=[])
+    total, adjustments = _total(profile, make_jd(core_skills=["Python"]))
+    components = compute_rule_based_components(profile=profile, parsed_jd=make_jd())
+    assert total == sum(c["score"] for c in components.values())
+    assert adjustments == ["Add skills to your profile for an accurate score."]
+
+
+def test_aws_umbrella_matches_specific_services_both_ways():
+    jd = make_jd(required_skills=["AWS ECS", "AWS RDS"], tech_stack=[], core_skills=[])
+    skills = compute_rule_based_components(
+        profile=make_profile(skills=["AWS"]), parsed_jd=jd
+    )["skills"]
+    assert skills["required_ratio"] == 1.0
+
+    jd = make_jd(required_skills=["AWS"], tech_stack=[], core_skills=[])
+    skills = compute_rule_based_components(
+        profile=make_profile(skills=["AWS Lambda"]), parsed_jd=jd
+    )["skills"]
+    assert skills["required_ratio"] == 1.0
+
+
+def test_umbrella_does_not_match_unrelated_prefixes():
+    jd = make_jd(required_skills=["AWSome Framework"], tech_stack=[], core_skills=[])
+    skills = compute_rule_based_components(
+        profile=make_profile(skills=["AWS"]), parsed_jd=jd
+    )["skills"]
+    assert skills["required_ratio"] == 0.0
+
+
+def test_nice_to_haves_listed_in_tech_stack_are_not_required():
+    jd = make_jd(
+        required_skills=["Python"],
+        tech_stack=["Python", "Spark"],
+        nice_to_have_skills=["Spark"],
+    )
+    skills = compute_rule_based_components(
+        profile=make_profile(skills=["Python"]), parsed_jd=jd
+    )["skills"]
+    assert skills["required_ratio"] == 1.0
+
+
+def test_partially_matched_core_scales_the_cap():
+    # Has Terraform, not Kubernetes: cap = 35 + 65 * 0.5 = 68 (rounded).
+    profile = make_profile(skills=["Terraform", "AWS", "Python", "Docker"])
+    jd = make_jd(
+        required_skills=["Kubernetes", "Terraform", "AWS", "Python", "Docker"],
+        tech_stack=[],
+        core_skills=["Kubernetes", "Terraform"],
+    )
+
+    total, adjustments = _total(profile, jd)
+
+    assert total == 68
+    assert "Missing core skill (Kubernetes): capped at 68" in adjustments[0]

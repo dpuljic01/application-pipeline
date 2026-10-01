@@ -4,6 +4,7 @@ import { useState } from "react";
 import { scoreApplication, ApiError } from "@/lib/api";
 import type { Application } from "@/lib/types";
 import { PostingScoreGauge } from "@/components/posting-score-gauge";
+import { MatchBreakdown } from "@/components/match-breakdown";
 import { Button } from "@/components/ui/button";
 
 export function MatchScorePanel({
@@ -69,8 +70,10 @@ export function MatchScorePanel({
           <PostingScoreGauge
             score={application.match_score}
             label="Job match"
-            caption="Based on your profile: skills, seniority, salary & remote policy"
+            caption="Based on your profile: skills, seniority, languages, salary & remote policy"
           />
+
+          <MatchBreakdown details={details} />
 
           <p className="text-sm text-foreground">{details.insights.fit_narrative}</p>
 

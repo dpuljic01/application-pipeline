@@ -30,13 +30,22 @@ export const ALLOWED_TRANSITIONS: Record<ApplicationStage, ApplicationStage[]> =
 export type Seniority = "junior" | "mid" | "senior" | "staff";
 export type SalaryConfidence = "stated" | "estimated" | "unknown";
 
+export type LanguageLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "native";
+
+export interface LanguageRequirement {
+  language: string;
+  min_level: LanguageLevel | null;
+  required: boolean;
+}
+
 export interface ParsedJobDescription {
   required_skills: string[];
   nice_to_have_skills: string[];
+  core_skills: string[];
   seniority_claimed: string | null;
   seniority_assessed: Seniority;
   tech_stack: string[];
-  languages: string[];
+  languages: LanguageRequirement[];
   years_experience_min: number | null;
   remote_policy: string | null;
   salary_range: string | null;
@@ -65,6 +74,8 @@ export interface MatchComponentScore {
 export interface MatchDetails {
   rule_score: number;
   components: Record<string, MatchComponentScore>;
+  // Why rule_score is below the component sum (skill gate, core-skill cap).
+  adjustments: string[];
   insights: MatchInsights;
   scored_at: string;
 }

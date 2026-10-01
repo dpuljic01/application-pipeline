@@ -8,9 +8,22 @@ from app.db.mixins import utcnow
 from app.db.models.profile import Profile
 from app.domain.errors import MatchingError
 from app.integrations.llm.base import LLMProvider, LLMProviderError, LLMTimeoutError
-from app.services.jd_parser import ParsedJobDescription
+from app.services.jd_parser import LANGUAGE_LEVEL_ORDER, ParsedJobDescription
 
 SENIORITY_ORDER = ["junior", "mid", "senior", "staff"]
+
+# Below this share of required skills matched, the non-skill components are
+# scaled down proportionally (at 30% matched they count half). Tapered, not
+# a cliff: a hard "<25% -> cap" makes 24% and 26% score wildly differently.
+SKILL_GATE_RATIO = 0.6
+# Ceiling when none of the posting's core skills (usually the main
+# programming language) is on the profile - the rest of the fit can't
+# compensate for not knowing the language the job is written in. With some
+# core skills matched the ceiling rises linearly to 100 (no cap) at all of
+# them: missing half the core is serious, but parsers sometimes list
+# accepted alternatives ("Python or Go") as two core skills, so "any core
+# skill missing -> 35" would punish a correct match.
+CORE_SKILL_MISSING_CAP = 35
 
 
 # --- output shapes -----------------------------------------------------
@@ -45,6 +58,9 @@ class MatchComponentScore(BaseModel):
 class MatchDetails(BaseModel):
     rule_score: int
     components: dict[str, MatchComponentScore]
+    # Human-readable reasons rule_score is lower than the component sum.
+    # Defaulted so match_details stored before this existed still load.
+    adjustments: list[str] = []
     insights: MatchInsights
     scored_at: str
 
@@ -57,29 +73,57 @@ class MatchDetails(BaseModel):
 # dicts here, not LanguageEntry objects.
 
 
-def _score_skills(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
-    profile_set = {s.strip().lower() for s in profile.skills}
-    required_pool = {s.strip().lower() for s in parsed_jd.required_skills} | {
-        s.strip().lower() for s in parsed_jd.tech_stack
-    }
-    nice_pool = {s.strip().lower() for s in parsed_jd.nice_to_have_skills}
+# Cloud providers whose services are named "<provider> <service>" (see
+# SKILL_NAMING_RULES). "AWS" on a profile counts for "AWS ECS" in a posting
+# and vice versa - someone listing AWS has used *some* of its services, and
+# a posting asking for "AWS" is satisfied by experience with any of them.
+CLOUD_UMBRELLAS = ("aws", "azure", "gcp")
 
-    required_score = (
-        30
-        if not required_pool
-        else round(30 * len(profile_set & required_pool) / len(required_pool))
+
+def _norm(skill: str) -> str:
+    return skill.strip().lower()
+
+
+def _has_skill(profile_set: set[str], skill: str) -> bool:
+    skill = _norm(skill)
+    if skill in profile_set:
+        return True
+    for umbrella in CLOUD_UMBRELLAS:
+        if skill == umbrella and any(p.startswith(umbrella + " ") for p in profile_set):
+            return True
+        if skill.startswith(umbrella + " ") and umbrella in profile_set:
+            return True
+    return False
+
+
+def _score_skills(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
+    profile_set = {_norm(s) for s in profile.skills}
+    nice_pool = {_norm(s) for s in parsed_jd.nice_to_have_skills}
+    # tech_stack minus nice-to-haves: the parser is told to keep them apart,
+    # but a stray nice-to-have there must not count as a hard requirement.
+    required_pool = (
+        {_norm(s) for s in parsed_jd.required_skills}
+        | {_norm(s) for s in parsed_jd.tech_stack}
+    ) - nice_pool
+    matched_required = {s for s in required_pool if _has_skill(profile_set, s)}
+    matched_nice = {s for s in nice_pool if _has_skill(profile_set, s)}
+
+    required_ratio = (
+        1.0 if not required_pool else len(matched_required) / len(required_pool)
     )
-    nice_score = (
-        10
-        if not nice_pool
-        else round(10 * len(profile_set & nice_pool) / len(nice_pool))
-    )
+    required_score = round(30 * required_ratio)
+    nice_score = 10 if not nice_pool else round(10 * len(matched_nice) / len(nice_pool))
 
     return {
         "score": required_score + nice_score,
         "max": 40,
-        "matched_required": sorted(profile_set & required_pool),
-        "matched_nice_to_have": sorted(profile_set & nice_pool),
+        "matched_required": sorted(matched_required),
+        "matched_nice_to_have": sorted(matched_nice),
+        "required_ratio": round(required_ratio, 2),
+        "core_skills": parsed_jd.core_skills,
+        "matched_core": [
+            s for s in parsed_jd.core_skills if _has_skill(profile_set, s)
+        ],
     }
 
 
@@ -102,20 +146,77 @@ def _score_seniority(*, profile: Profile, parsed_jd: ParsedJobDescription) -> di
     return {"score": score, "max": 20, "assessed": assessed, "targets": targets}
 
 
-def _score_languages(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
-    required = parsed_jd.languages
-    if not required:
-        return {"score": 15, "max": 15, "matched": [], "missing": []}
+# Profile levels are the Profile page's labels ("Advanced (C1)", "Native"),
+# or free text for "Other" - read a CEFR code if present, else keywords.
+_LEVEL_KEYWORDS = [
+    ("native", "native"),
+    ("mother", "native"),
+    ("muttersprache", "native"),
+    ("fluent", "C2"),
+    ("verhandlungssicher", "C2"),
+    ("fliessend", "C2"),
+    ("upper", "B2"),
+    ("advanced", "C1"),
+    ("intermediate", "B1"),
+    ("elementary", "A2"),
+    ("basic", "A2"),
+    ("beginner", "A1"),
+]
 
-    profile_langs = {entry["language"].strip().lower() for entry in profile.languages}
-    matched = [lang for lang in required if lang.strip().lower() in profile_langs]
-    missing = [lang for lang in required if lang.strip().lower() not in profile_langs]
+
+def profile_language_level(level: str) -> str | None:
+    text = level.strip().lower()
+    cefr = re.search(r"\b([abc][12])\b", text)
+    if cefr:
+        return cefr.group(1).upper()
+    for keyword, mapped in _LEVEL_KEYWORDS:
+        if keyword in text:
+            return mapped
+    return None
+
+
+def _language_credit(*, required: str | None, have: str | None) -> float:
+    """1.0 meets the level, 0.5 one step short, 0 otherwise. Unknown levels
+    on either side count as met - missing data is neutral, not a penalty."""
+    if required is None or have is None:
+        return 1.0
+    shortfall = LANGUAGE_LEVEL_ORDER.index(required) - LANGUAGE_LEVEL_ORDER.index(have)
+    if shortfall <= 0:
+        return 1.0
+    return 0.5 if shortfall == 1 else 0.0
+
+
+def _score_languages(*, profile: Profile, parsed_jd: ParsedJobDescription) -> dict:
+    # Only hard requirements count; "German is a plus" can't cost points.
+    required = [req for req in parsed_jd.languages if req.required]
+    if not required:
+        return {"score": 15, "max": 15, "requirements": []}
+
+    profile_levels = {
+        entry["language"].strip().lower(): profile_language_level(entry["level"])
+        for entry in profile.languages
+    }
+    results = []
+    for req in required:
+        key = req.language.strip().lower()
+        if key not in profile_levels:
+            credit, have = 0.0, None
+        else:
+            have = profile_levels[key]
+            credit = _language_credit(required=req.min_level, have=have)
+        results.append(
+            {
+                "language": req.language,
+                "required_level": req.min_level,
+                "your_level": have if key in profile_levels else "missing",
+                "credit": credit,
+            }
+        )
 
     return {
-        "score": round(15 * len(matched) / len(required)),
+        "score": round(15 * sum(r["credit"] for r in results) / len(results)),
         "max": 15,
-        "matched": matched,
-        "missing": missing,
+        "requirements": results,
     }
 
 
@@ -175,6 +276,50 @@ def _score_remote_policy(*, parsed_jd: ParsedJobDescription) -> dict:
         score = 8  # unrecognized text, lenient
 
     return {"score": score, "max": 10, "policy": parsed_jd.remote_policy}
+
+
+def compute_rule_score(
+    *, profile: Profile, components: dict[str, dict]
+) -> tuple[int, list[str]]:
+    """Combines the components into the final 0-100 score. Not a plain sum:
+    the stack has to fit before salary, seniority or remote policy matter."""
+    skills = components["skills"]
+    others = sum(c["score"] for name, c in components.items() if name != "skills")
+
+    if not profile.skills:
+        # Can't judge the stack against an empty profile - don't gate on it.
+        return skills["score"] + others, [
+            "Add skills to your profile for an accurate score."
+        ]
+
+    adjustments = []
+    ratio = skills["required_ratio"]
+    if ratio < SKILL_GATE_RATIO:
+        factor = ratio / SKILL_GATE_RATIO
+        scaled = round(others * factor)
+        adjustments.append(
+            f"Only {round(ratio * 100)}% of required skills matched, so "
+            f"seniority, language, salary and remote count {round(factor * 100)}% "
+            f"({others} -> {scaled} points)."
+        )
+        others = scaled
+
+    total = skills["score"] + others
+    core = skills["core_skills"]
+    if core:
+        core_ratio = len(skills["matched_core"]) / len(core)
+        cap = round(
+            CORE_SKILL_MISSING_CAP + (100 - CORE_SKILL_MISSING_CAP) * core_ratio
+        )
+        if total > cap:
+            missing = [s for s in core if s not in skills["matched_core"]]
+            adjustments.append(
+                f"Missing core skill ({', '.join(missing)}): capped at {cap} "
+                f"(was {total})."
+            )
+            total = cap
+
+    return total, adjustments
 
 
 def compute_rule_based_components(
@@ -262,7 +407,7 @@ def score_application_match(
     application_location: str | None,
 ) -> MatchDetails:
     components = compute_rule_based_components(profile=profile, parsed_jd=parsed_jd)
-    rule_score = sum(c["score"] for c in components.values())
+    rule_score, adjustments = compute_rule_score(profile=profile, components=components)
 
     insights = generate_match_insights(
         llm,
@@ -274,6 +419,7 @@ def score_application_match(
     return MatchDetails(
         rule_score=rule_score,
         components=components,
+        adjustments=adjustments,
         insights=insights,
         scored_at=utcnow().isoformat(),
     )

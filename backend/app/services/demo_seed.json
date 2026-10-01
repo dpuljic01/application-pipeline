@@ -6,6 +6,7 @@
       "FastAPI",
       "Django",
       "PostgreSQL",
+      "SQL",
       "SQLAlchemy",
       "Docker",
       "AWS",
@@ -72,15 +73,15 @@
         "required_skills": [
           "Python",
           "SQL",
-          "Data modelling",
           "AWS",
-          "Terraform",
-          "CI/CD"
+          "Terraform"
         ],
         "nice_to_have_skills": [
           "Kafka",
-          "Event-driven architecture",
           "Go"
+        ],
+        "core_skills": [
+          "Python"
         ],
         "seniority_claimed": "Senior",
         "seniority_assessed": "senior",
@@ -88,15 +89,22 @@
           "Python",
           "FastAPI",
           "PostgreSQL",
-          "AWS",
           "AWS ECS",
           "AWS RDS",
           "AWS SQS",
           "Terraform"
         ],
         "languages": [
-          "English",
-          "German"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          },
+          {
+            "language": "German",
+            "min_level": null,
+            "required": false
+          }
         ],
         "years_experience_min": 5,
         "remote_policy": "Hybrid: 2 days per week in Zurich office",
@@ -110,23 +118,34 @@
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Senior Backend Engineer role at Northgate AG focusing on Python services, AWS infrastructure, and team mentorship in a hybrid Zurich-based environment."
+        "summary": "Senior Backend Engineer role at Northgate AG focusing on Python services and AWS infrastructure for logistics planning software."
       },
-      "match_score": 74,
+      "match_score": 90,
       "match_details": {
-        "rule_score": 74,
+        "rule_score": 90,
         "components": {
           "skills": {
-            "score": 14,
+            "score": 30,
             "max": 40,
             "matched_required": [
               "aws",
+              "aws ecs",
+              "aws rds",
+              "aws sqs",
               "fastapi",
               "postgresql",
               "python",
+              "sql",
               "terraform"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 1.0,
+            "core_skills": [
+              "Python"
+            ],
+            "matched_core": [
+              "Python"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -140,11 +159,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English",
-              "German"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 15,
@@ -157,25 +179,26 @@
             "policy": "Hybrid: 2 days per week in Zurich office"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong technical match for this role, possessing the required Python, AWS, and Terraform experience. Their background in FastAPI and PostgreSQL aligns perfectly with the tech stack, and their location in Zurich makes the hybrid requirement easily manageable. The primary gap is a lack of explicit mention of mentorship experience, which is a key responsibility for this senior position.",
+          "fit_narrative": "The candidate is a strong match for this role, possessing the required 6 years of experience and the core Python, SQL, AWS, and Terraform skills requested. Their location in Zurich aligns perfectly with the hybrid office requirement, and their technical stack overlaps significantly with the company's infrastructure. The primary gap is a lack of explicit experience with Kafka or Go, which are listed as nice-to-haves, and the candidate will need to demonstrate their readiness for the mentorship component of the role.",
           "key_strengths": [
-            "Strong alignment with the core Python/FastAPI/PostgreSQL stack",
-            "Proven experience with AWS and Terraform infrastructure",
-            "Local candidate based in Zurich, facilitating the hybrid work model",
-            "Fluent English and intermediate German proficiency"
+            "Strong alignment with the core Python, AWS, and Terraform stack",
+            "Local candidate based in Zurich, ensuring seamless hybrid office attendance",
+            "Experience with the full backend lifecycle including Docker, CI/CD, and database management",
+            "Meets the minimum years of experience requirement"
           ],
           "gaps": [
-            "No explicit evidence of prior experience mentoring junior or mid-level engineers",
-            "Lack of experience with event-driven architectures or Kafka, which are listed as nice-to-have skills"
+            "No explicit mention of Kafka or Go experience",
+            "Limited evidence of formal mentorship experience for the required mid-level engineer oversight"
           ],
           "talking_points": [
-            "Highlight your experience designing and scaling Python services using FastAPI and SQLAlchemy to demonstrate readiness for owning the routing platform.",
-            "Discuss your approach to CI/CD and infrastructure-as-code using Terraform and GitHub Actions to show how you maintain reliability in AWS environments.",
-            "Address your interest in the mentorship component of the role, perhaps by sharing examples of how you have supported team members or conducted code reviews in previous positions."
+            "Highlight experience designing and scaling Python services using FastAPI and Django to address the routing platform responsibilities.",
+            "Discuss past projects where Terraform and AWS were used to manage infrastructure, demonstrating readiness for the AWS ECS/RDS environment.",
+            "Emphasize a collaborative approach to API standards and a willingness to take on the mentorship of mid-level team members."
           ]
         },
-        "scored_at": "2026-10-01T13:35:46.955152+00:00"
+        "scored_at": "2026-10-01T13:50:50.262832+00:00"
       },
       "generated_followup": null
     },
@@ -204,43 +227,55 @@
           "Redis",
           "Celery"
         ],
+        "core_skills": [
+          "Python",
+          "Django"
+        ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
         "tech_stack": [
           "Python",
           "Django",
           "PostgreSQL",
-          "Celery",
           "Docker",
-          "Redis",
           "pytest"
         ],
         "languages": [
-          "English",
-          "German"
+          {
+            "language": "German",
+            "min_level": "B2",
+            "required": false
+          },
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 3,
         "remote_policy": "Hybrid in Bern (3 days on site)",
         "salary_range": null,
         "salary_confidence": "unknown",
         "key_responsibilities": [
-          "Extend Django platform",
+          "Extend Django booking platform",
           "Develop REST APIs",
           "Manage Celery background jobs",
           "Integrate payment providers"
         ],
-        "red_flags": [],
+        "red_flags": [
+          "no salary range"
+        ],
         "missing_info": [
           "no salary range"
         ],
-        "summary": "Backend Developer role at Alpenblick Systems GmbH focusing on Django-based booking software for the Swiss tourism industry."
+        "summary": "Backend Developer role at Alpenblick Systems GmbH focusing on Python and Django development for a tourism booking platform."
       },
-      "match_score": 80,
+      "match_score": 88,
       "match_details": {
-        "rule_score": 80,
+        "rule_score": 88,
         "components": {
           "skills": {
-            "score": 27,
+            "score": 35,
             "max": 40,
             "matched_required": [
               "django",
@@ -248,10 +283,19 @@
               "postgresql",
               "pytest",
               "python",
-              "redis"
+              "sql"
             ],
             "matched_nice_to_have": [
               "redis"
+            ],
+            "required_ratio": 1.0,
+            "core_skills": [
+              "Python",
+              "Django"
+            ],
+            "matched_core": [
+              "Python",
+              "Django"
             ]
           },
           "seniority": {
@@ -266,11 +310,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English",
-              "German"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 8,
@@ -283,27 +330,26 @@
             "policy": "Hybrid in Bern (3 days on site)"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong technical match for this role, possessing the required Python, Django, and Docker expertise. While the candidate is based in Zurich and the role requires a hybrid presence in Bern, the commute is feasible via Swiss rail, though it may impact the candidate's preference for a 3-day onsite requirement. The candidate lacks specific experience with Celery, which is a key component of the job's background job management responsibilities.",
+          "fit_narrative": "The candidate is a strong technical match for this role, possessing the required Python, Django, and Docker expertise. While the candidate is based in Zurich and the role requires a hybrid presence in Bern, the commute is feasible via train, though it may impact the 3-day onsite requirement. The candidate lacks specific experience with Celery, which is listed as a nice-to-have skill for managing background jobs.",
           "key_strengths": [
-            "Strong proficiency in Python and Django",
-            "Experience with the required tech stack including PostgreSQL, Docker, and pytest",
-            "Relevant experience with REST API development",
-            "Fluent English and intermediate German skills"
+            "Strong proficiency in the core stack (Python, Django, PostgreSQL, Docker)",
+            "Experience with testing frameworks like pytest",
+            "Relevant experience level exceeding the 3-year minimum"
           ],
           "gaps": [
-            "No professional experience with Celery listed",
-            "Commute from Zurich to Bern for a 3-day hybrid schedule may be a logistical challenge",
-            "Lack of specific experience in payment provider integration"
+            "Lack of documented experience with Celery",
+            "German language proficiency is B1, while the role prefers B2",
+            "Commute from Zurich to Bern for a 3-day hybrid schedule"
           ],
           "talking_points": [
-            "Highlight extensive experience building and maintaining REST APIs using Django and FastAPI.",
-            "Emphasize ability to quickly adapt to Celery given strong background in asynchronous task management and Redis.",
-            "Confirm willingness to commute to Bern three days per week to meet the hybrid requirement.",
-            "Discuss experience with infrastructure tools like Terraform and AWS to support the deployment of booking software."
+            "Highlight extensive experience building REST APIs with Django and FastAPI to support the booking platform's backend needs.",
+            "Emphasize familiarity with infrastructure tools like Terraform and AWS, which can support the deployment and scaling of the booking platform.",
+            "Address the hybrid requirement by confirming the ability to commute from Zurich to Bern three days per week."
           ]
         },
-        "scored_at": "2026-10-01T13:36:02.009917+00:00"
+        "scored_at": "2026-10-01T13:51:05.509795+00:00"
       },
       "generated_followup": {
         "subject": "Following up: Backend Developer Python/Django application",
@@ -328,12 +374,17 @@
           "Python",
           "SQL",
           "AWS",
-          "Terraform"
+          "Terraform",
+          "Airflow"
         ],
         "nice_to_have_skills": [
           "Spark",
           "dbt",
           "Kafka"
+        ],
+        "core_skills": [
+          "Python",
+          "SQL"
         ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
@@ -341,14 +392,17 @@
           "Python",
           "SQL",
           "Airflow",
-          "AWS",
-          "S3",
-          "Glue",
-          "Redshift",
+          "AWS S3",
+          "AWS Glue",
+          "AWS Redshift",
           "Terraform"
         ],
         "languages": [
-          "English"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 3,
         "remote_policy": "40% remote",
@@ -356,27 +410,40 @@
         "salary_confidence": "stated",
         "key_responsibilities": [
           "Build batch and streaming data pipelines",
-          "Orchestrate pipelines with Airflow",
-          "Manage infrastructure with Terraform",
+          "Orchestrate data pipelines",
+          "Manage infrastructure as code",
           "Collaborate with data scientists on data quality"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Data Engineer role at Lindwurm Data AG focusing on building and orchestrating clinical-trial data pipelines using Python, SQL, and AWS."
+        "summary": "Data Engineer role at Lindwurm Data AG focusing on building and orchestrating data pipelines for clinical-trial data using Python, SQL, and AWS."
       },
-      "match_score": 64,
+      "match_score": 79,
       "match_details": {
-        "rule_score": 64,
+        "rule_score": 79,
         "components": {
           "skills": {
-            "score": 11,
+            "score": 26,
             "max": 40,
             "matched_required": [
               "aws",
+              "aws glue",
+              "aws redshift",
+              "aws s3",
               "python",
+              "sql",
               "terraform"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.88,
+            "core_skills": [
+              "Python",
+              "SQL"
+            ],
+            "matched_core": [
+              "Python",
+              "SQL"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -390,10 +457,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 8,
@@ -406,26 +477,27 @@
             "policy": "40% remote"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong technical match for the core Python, SQL, and AWS requirements, though their background appears more focused on backend web development than data engineering. While the commute between Zurich and Basel is manageable via train, the candidate lacks specific experience with the required data-centric tools like Airflow, Glue, and Redshift. They will need to demonstrate how their backend infrastructure skills translate to building clinical-trial data pipelines.",
+          "fit_narrative": "The candidate is a strong technical match for the core Python and AWS requirements, and their location in Zurich makes the commute to Basel highly feasible. However, the candidate lacks explicit experience with Airflow, which is a central requirement for this role's pipeline orchestration responsibilities. They will need to demonstrate how their background in backend development translates to building data-specific pipelines.",
           "key_strengths": [
-            "Strong proficiency in Python and AWS",
-            "Experience with infrastructure-as-code via Terraform",
-            "Professional fluency in English",
-            "Relevant experience with containerization and CI/CD pipelines"
+            "Strong proficiency in Python and SQL",
+            "Hands-on experience with AWS and Terraform",
+            "Relevant experience with containerization and CI/CD tools",
+            "Geographically well-positioned for the Basel-based role"
           ],
           "gaps": [
-            "Lack of documented experience with data orchestration tools like Airflow",
-            "No specific mention of data warehousing technologies like Redshift or ETL services like AWS Glue",
-            "Background appears more aligned with web application development than data engineering"
+            "No documented experience with Apache Airflow",
+            "Lack of specific experience with data-centric tools like Spark, dbt, or Kafka",
+            "Limited exposure to clinical-trial data environments"
           ],
           "talking_points": [
-            "Highlight experience building scalable backend systems and how those principles apply to data pipeline reliability.",
-            "Discuss familiarity with AWS infrastructure and Terraform as a foundation for managing data resources.",
-            "Emphasize the ability to quickly learn data-specific orchestration tools like Airflow given the strong background in Python and Linux."
+            "Highlight how your experience with FastAPI and Django backend systems has prepared you for the architectural demands of building robust data pipelines.",
+            "Emphasize your ability to manage infrastructure as code using Terraform, which directly aligns with the team's operational requirements.",
+            "Express your readiness to quickly bridge the gap in Airflow knowledge by leveraging your existing expertise in Python-based orchestration and workflow automation."
           ]
         },
-        "scored_at": "2026-10-01T13:36:27.447521+00:00"
+        "scored_at": "2026-10-01T13:51:31.934354+00:00"
       },
       "generated_followup": null
     },
@@ -470,46 +542,52 @@
         "required_skills": [
           "Python",
           "PostgreSQL",
-          "Distributed Systems",
-          "Message Queues"
+          "Kafka"
         ],
         "nice_to_have_skills": [
           "Fintech",
           "Payments"
+        ],
+        "core_skills": [
+          "Python",
+          "PostgreSQL"
         ],
         "seniority_claimed": "Senior",
         "seniority_assessed": "senior",
         "tech_stack": [
           "Python",
           "FastAPI",
-          "asyncio",
           "PostgreSQL",
           "Kafka",
           "Kubernetes",
           "AWS"
         ],
         "languages": [
-          "English"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 5,
         "remote_policy": "hybrid (2 days on site)",
         "salary_range": "CHF 130'000 - 150'000",
         "salary_confidence": "stated",
         "key_responsibilities": [
-          "Build high-availability backend services",
+          "Build high-availability payment services",
           "Ensure system correctness including idempotency and reconciliation",
           "Participate in shared on-call rotation"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Senior Software Engineer role at Seetal Payments AG focusing on high-availability payment processing services using Python and distributed systems."
+        "summary": "Senior Software Engineer role at Seetal Payments AG building high-availability payment services using Python, PostgreSQL, and Kafka in a hybrid setup in Zug."
       },
-      "match_score": 73,
+      "match_score": 80,
       "match_details": {
-        "rule_score": 73,
+        "rule_score": 80,
         "components": {
           "skills": {
-            "score": 13,
+            "score": 20,
             "max": 40,
             "matched_required": [
               "aws",
@@ -517,7 +595,16 @@
               "postgresql",
               "python"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.67,
+            "core_skills": [
+              "Python",
+              "PostgreSQL"
+            ],
+            "matched_core": [
+              "Python",
+              "PostgreSQL"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -531,10 +618,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 15,
@@ -547,26 +638,27 @@
             "policy": "hybrid (2 days on site)"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong technical match for this role, possessing the required Python and PostgreSQL expertise and meeting the seniority requirements. While the candidate lacks explicit experience with Kafka and Kubernetes, their background in AWS and Docker provides a solid foundation for these technologies. The commute between Zurich and Zug is highly feasible for the required hybrid schedule.",
+          "fit_narrative": "The candidate is a strong technical match for the core Python and PostgreSQL requirements, and the commute between Zurich and Zug is highly feasible for a hybrid role. However, the candidate lacks explicit experience with Kafka and Kubernetes, which are key components of the Seetal Payments stack. They meet the seniority and language requirements, but will need to demonstrate how they can quickly adapt to the specific demands of high-availability payment systems.",
           "key_strengths": [
-            "6 years of relevant backend development experience",
-            "Strong proficiency in Python, FastAPI, and PostgreSQL",
-            "Experience with AWS and infrastructure-as-code tools like Terraform",
-            "Fluent English communication skills"
+            "6 years of relevant backend experience",
+            "Strong proficiency in Python and PostgreSQL",
+            "Experience with AWS and Docker",
+            "Geographically well-positioned for the hybrid requirement in Zug"
           ],
           "gaps": [
-            "No explicit professional experience with Kafka or distributed message queues",
-            "Lack of direct experience with Kubernetes orchestration",
-            "No specific background in Fintech or payment processing systems"
+            "No documented experience with Kafka",
+            "No documented experience with Kubernetes",
+            "Lack of specific domain experience in Fintech or Payments"
           ],
           "talking_points": [
-            "Highlight experience building robust REST APIs with FastAPI and SQLAlchemy, which aligns well with the requirement for high-availability backend services.",
-            "Emphasize familiarity with AWS and Docker as a basis for quickly adapting to the team's Kubernetes and Kafka-based infrastructure.",
-            "Discuss experience with system reliability and testing (pytest) as a foundation for managing the complexities of payment reconciliation and idempotency."
+            "Highlight experience building robust REST APIs and managing data integrity with SQLAlchemy and PostgreSQL as a foundation for payment reconciliation tasks.",
+            "Emphasize ability to manage infrastructure via Terraform and GitHub Actions, showing readiness to learn Kubernetes and Kafka.",
+            "Confirm comfort with on-call rotations and high-availability system maintenance based on previous backend engineering roles."
           ]
         },
-        "scored_at": "2026-10-01T13:36:43.391833+00:00"
+        "scored_at": "2026-10-01T13:51:51.681929+00:00"
       },
       "generated_followup": null
     },
@@ -594,49 +686,64 @@
           "HL7",
           "FHIR"
         ],
+        "core_skills": [
+          "Python",
+          "Django"
+        ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
         "tech_stack": [
           "Python",
           "Django",
-          "PostgreSQL",
-          "HL7",
-          "FHIR"
+          "PostgreSQL"
         ],
         "languages": [
-          "German"
+          {
+            "language": "German",
+            "min_level": "C2",
+            "required": true
+          }
         ],
         "years_experience_min": 3,
-        "remote_policy": "1 day home office per week",
+        "remote_policy": "1 day per week",
         "salary_range": null,
         "salary_confidence": "unknown",
         "key_responsibilities": [
-          "Development of Django-based software for medical practices",
-          "Integration with laboratory systems using HL7 and FHIR",
-          "Maintenance and management of PostgreSQL databases"
+          "Weiterentwicklung der Django-Anwendung",
+          "Anbindung von Schnittstellen zu Laborsystemen",
+          "Betreuung der PostgreSQL-Datenbanken"
         ],
         "red_flags": [
-          "Fliessende Deutschkenntnisse (verhandlungssicher) required",
-          "No salary range provided"
+          "missing salary range",
+          "mandatory C2 German requirement"
         ],
         "missing_info": [
           "no salary range"
         ],
-        "summary": "Backend Python Developer role focused on medical software development and system integration for a company based in Lucerne."
+        "summary": "Python Developer role for a healthcare software company in Lucerne focusing on Django backend development and medical system integrations."
       },
-      "match_score": 69,
+      "match_score": 66,
       "match_details": {
-        "rule_score": 69,
+        "rule_score": 66,
         "components": {
           "skills": {
-            "score": 18,
+            "score": 30,
             "max": 40,
             "matched_required": [
               "django",
               "postgresql",
               "python"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 1.0,
+            "core_skills": [
+              "Python",
+              "Django"
+            ],
+            "matched_core": [
+              "Python",
+              "Django"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -648,12 +755,16 @@
             ]
           },
           "language": {
-            "score": 15,
+            "score": 0,
             "max": 15,
-            "matched": [
-              "German"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "German",
+                "required_level": "C2",
+                "your_level": "B1",
+                "credit": 0.0
+              }
+            ]
           },
           "salary": {
             "score": 8,
@@ -663,28 +774,28 @@
           "remote_policy": {
             "score": 8,
             "max": 10,
-            "policy": "1 day home office per week"
+            "policy": "1 day per week"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong technical match for the backend requirements, possessing the necessary experience with Python, Django, and PostgreSQL. However, there is a significant language gap as the role requires fluent, business-level German, while the candidate is at an intermediate B1 level. Additionally, the candidate lacks the specific domain experience in HL7 and FHIR standards required for the medical software integration tasks.",
+          "fit_narrative": "The candidate possesses the required technical stack in Python, Django, and PostgreSQL, and meets the experience threshold. However, there is a significant language gap as the role requires C2-level German for professional communication, while the candidate is at a B1 level. Additionally, the commute from Zurich to Lucerne is manageable, but the language barrier remains a primary obstacle for this specific position.",
           "key_strengths": [
-            "Strong proficiency in the core tech stack (Python, Django, PostgreSQL)",
-            "Relevant experience with cloud infrastructure and CI/CD tools",
-            "Meets the minimum years of experience requirement"
+            "Strong alignment with the core technical stack (Python, Django, PostgreSQL)",
+            "Relevant experience with backend development and database management",
+            "Proximity to Lucerne allows for the required onsite presence"
           ],
           "gaps": [
-            "Language proficiency: Role requires fluent German, candidate is at B1 level",
-            "Domain knowledge: Lacks experience with HL7 and FHIR medical standards",
-            "Commute: While Zurich to Lucerne is commutable, the role's strict 1-day remote policy requires consistent onsite presence"
+            "Language proficiency: Candidate is B1 in German, while the role mandates C2",
+            "Lack of domain-specific experience in healthcare standards like HL7 or FHIR"
           ],
           "talking_points": [
-            "Highlight ability to quickly learn domain-specific protocols like HL7 and FHIR given a strong background in complex backend integrations.",
-            "Emphasize commitment to rapidly improving German language skills to meet the business-level requirement.",
-            "Leverage experience with AWS and Terraform to demonstrate value in maintaining and scaling the medical software infrastructure."
+            "Highlight 6 years of backend experience specifically using the Django framework to demonstrate technical readiness for the application development tasks.",
+            "Emphasize proficiency in PostgreSQL and database maintenance to address the core responsibility of managing the company's data systems.",
+            "Acknowledge the language requirement and express a willingness to rapidly improve German proficiency to meet the professional standards of the team."
           ]
         },
-        "scored_at": "2026-10-01T13:37:00.698726+00:00"
+        "scored_at": "2026-10-01T13:52:10.209651+00:00"
       },
       "generated_followup": null
     },
@@ -723,11 +834,15 @@
           "Helm",
           "ArgoCD"
         ],
+        "core_skills": [
+          "AWS",
+          "Kubernetes",
+          "Terraform"
+        ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
         "tech_stack": [
           "AWS",
-          "Kubernetes",
           "EKS",
           "Terraform",
           "Prometheus",
@@ -736,8 +851,16 @@
           "Python"
         ],
         "languages": [
-          "English",
-          "German"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          },
+          {
+            "language": "German",
+            "min_level": null,
+            "required": false
+          }
         ],
         "years_experience_min": 3,
         "remote_policy": "hybrid",
@@ -747,29 +870,37 @@
           "Manage EKS clusters",
           "Build Terraform modules",
           "Maintain observability stack",
-          "Improve CI/CD pipelines",
-          "Develop Python tooling"
+          "Improve CI/CD pipelines"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Cloud Engineer role at Föhnwerk Energy AG focused on managing AWS infrastructure, Kubernetes clusters, and CI/CD pipelines for solar and battery software."
+        "summary": "Cloud Engineer role at Föhnwerk Energy AG focused on managing AWS infrastructure, Kubernetes clusters, and CI/CD pipelines."
       },
-      "match_score": 75,
+      "match_score": 64,
       "match_details": {
-        "rule_score": 75,
+        "rule_score": 64,
         "components": {
           "skills": {
-            "score": 20,
+            "score": 18,
             "max": 40,
             "matched_required": [
               "aws",
               "github actions",
               "linux",
-              "python",
               "terraform"
             ],
             "matched_nice_to_have": [
               "python"
+            ],
+            "required_ratio": 0.5,
+            "core_skills": [
+              "AWS",
+              "Kubernetes",
+              "Terraform"
+            ],
+            "matched_core": [
+              "AWS",
+              "Terraform"
             ]
           },
           "seniority": {
@@ -784,11 +915,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English",
-              "German"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 10,
@@ -801,26 +935,29 @@
             "policy": "hybrid"
           }
         },
+        "adjustments": [
+          "Only 50% of required skills matched, so seniority, language, salary and remote count 83% (55 -> 46 points)."
+        ],
         "insights": {
-          "fit_narrative": "The candidate is a strong match for the Python development and infrastructure automation aspects of this role, possessing relevant experience with AWS, Terraform, and Linux. However, there is a notable gap in direct Kubernetes and EKS management experience, which is a core responsibility of this position. Given the candidate's location in Zurich and the hybrid nature of the role, the commute is highly feasible.",
+          "fit_narrative": "The candidate is a strong technical match for the Python and AWS requirements, but lacks explicit professional experience with Kubernetes (EKS) and observability tools like Prometheus or Grafana. While their background in Terraform and Linux provides a solid foundation, they will need to demonstrate a quick learning curve for the specific cluster management responsibilities required by Föhnwerk Energy AG.",
           "key_strengths": [
-            "Strong proficiency in Python and AWS infrastructure",
-            "Experience with Terraform and CI/CD pipelines via GitHub Actions",
-            "Solid foundation in Linux environments",
+            "Strong proficiency in Python and FastAPI/Django",
+            "Proven experience with AWS and Terraform",
+            "Familiarity with CI/CD workflows via GitHub Actions",
             "Local candidate based in Zurich"
           ],
           "gaps": [
-            "Lack of documented professional experience with Kubernetes and EKS",
-            "No mention of observability tools like Prometheus or Grafana",
-            "Missing experience with Helm and ArgoCD"
+            "No documented experience with Kubernetes (EKS)",
+            "Lack of experience with observability stacks (Prometheus/Grafana)",
+            "No mention of Helm or ArgoCD"
           ],
           "talking_points": [
-            "Highlight your extensive experience building and maintaining infrastructure with Terraform and AWS to demonstrate your readiness for the platform engineering aspects of the role.",
-            "Emphasize your ability to develop Python tooling, which directly supports the team's goal of automating solar and battery software operations.",
-            "Acknowledge the Kubernetes requirement and express your willingness to leverage your strong Linux and cloud background to quickly upskill in EKS management."
+            "Highlight your extensive experience with Terraform and AWS to demonstrate your ability to manage cloud infrastructure.",
+            "Emphasize your ability to quickly adapt to new container orchestration technologies, leveraging your strong Linux and Docker background.",
+            "Discuss your experience building robust CI/CD pipelines and how you can apply those skills to the team's existing GitHub Actions workflows."
           ]
         },
-        "scored_at": "2026-10-01T13:37:19.110781+00:00"
+        "scored_at": "2026-10-01T13:52:28.948523+00:00"
       },
       "generated_followup": null
     },
@@ -834,14 +971,19 @@
       "activities": [],
       "parsed_jd": {
         "required_skills": [
-          "Software Architecture",
-          "System Migration",
-          "Mentoring",
-          "Engineering Standards Definition",
-          "JVM"
+          "Java",
+          "Kotlin",
+          "Spring Boot",
+          "PostgreSQL",
+          "Kafka",
+          "Azure"
         ],
         "nice_to_have_skills": [],
-        "seniority_claimed": "Staff Engineer",
+        "core_skills": [
+          "Java",
+          "Kotlin"
+        ],
+        "seniority_claimed": "Staff",
         "seniority_assessed": "staff",
         "tech_stack": [
           "Java",
@@ -852,8 +994,16 @@
           "Azure"
         ],
         "languages": [
-          "German",
-          "English"
+          {
+            "language": "German",
+            "min_level": "C1",
+            "required": true
+          },
+          {
+            "language": "English",
+            "min_level": "C1",
+            "required": true
+          }
         ],
         "years_experience_min": 10,
         "remote_policy": "3 days on site in Zurich",
@@ -861,7 +1011,7 @@
         "salary_confidence": "unknown",
         "key_responsibilities": [
           "Set technical direction across four product teams",
-          "Lead architecture for monolith to services migration",
+          "Lead architecture for migration from monolith to services",
           "Define engineering standards",
           "Mentor senior engineers"
         ],
@@ -873,17 +1023,23 @@
         ],
         "summary": "Staff Engineer role at Kestrel Insurance Tech AG to lead architectural migration and engineering standards across four product teams in Zurich."
       },
-      "match_score": 52,
+      "match_score": 24,
       "match_details": {
-        "rule_score": 52,
+        "rule_score": 24,
         "components": {
           "skills": {
-            "score": 13,
+            "score": 15,
             "max": 40,
             "matched_required": [
               "postgresql"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.17,
+            "core_skills": [
+              "Java",
+              "Kotlin"
+            ],
+            "matched_core": []
           },
           "seniority": {
             "score": 10,
@@ -895,13 +1051,22 @@
             ]
           },
           "language": {
-            "score": 15,
+            "score": 8,
             "max": 15,
-            "matched": [
-              "German",
-              "English"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "German",
+                "required_level": "C1",
+                "your_level": "B1",
+                "credit": 0.0
+              },
+              {
+                "language": "English",
+                "required_level": "C1",
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 8,
@@ -914,26 +1079,30 @@
             "policy": "3 days on site in Zurich"
           }
         },
+        "adjustments": [
+          "Only 17% of required skills matched, so seniority, language, salary and remote count 28% (32 -> 9 points)."
+        ],
         "insights": {
-          "fit_narrative": "The candidate is a strong mid-to-senior level developer but lacks the 10+ years of experience and the specific JVM-based tech stack (Java, Kotlin, Spring Boot) required for this Staff Engineer role. Furthermore, the candidate's background is primarily in the Python ecosystem, making the transition to leading a complex monolith-to-services migration in an Azure/Java environment a significant stretch.",
+          "fit_narrative": "The candidate is a poor fit for this Staff Engineer role, as their primary expertise is in the Python ecosystem rather than the required Java/Kotlin/Spring Boot stack. Furthermore, the candidate lacks the 10 years of experience requested and does not meet the C1 German language requirement, which is critical for a leadership role overseeing four product teams.",
           "key_strengths": [
-            "Strong proficiency in backend development with Python and FastAPI",
-            "Experience with cloud infrastructure and CI/CD tools like AWS and Terraform",
-            "Local candidate based in Zurich, aligning with the 3-day onsite requirement"
+            "Strong backend experience with PostgreSQL and REST APIs",
+            "Familiarity with cloud infrastructure and CI/CD tools",
+            "Local candidate based in Zurich"
           ],
           "gaps": [
-            "Insufficient years of experience (6 years vs 10+ years required)",
-            "Lack of professional experience with the required JVM stack (Java, Kotlin, Spring Boot)",
-            "No demonstrated experience in a Staff-level capacity defining engineering standards across multiple product teams",
-            "Experience is in AWS, whereas the role requires Azure"
+            "Missing core technical stack (Java, Kotlin, Spring Boot)",
+            "Lacks experience with Kafka and Azure",
+            "Does not meet the 10-year minimum experience requirement",
+            "German language proficiency is B1, while C1 is required",
+            "Lack of demonstrated experience in a Staff-level architectural leadership role"
           ],
           "talking_points": [
-            "Highlight experience in building scalable REST APIs and managing PostgreSQL databases, which are transferable concepts to the migration project.",
-            "Emphasize the ability to quickly adapt to new ecosystems, noting the candidate's experience with infrastructure-as-code and containerization.",
-            "Discuss the candidate's interest in moving into a more architectural and leadership-focused role, despite the current gap in seniority."
+            "Highlight experience in migrating and scaling backend services, even if the language stack differs.",
+            "Emphasize ability to quickly adapt to new ecosystems and contribute to engineering standards.",
+            "Discuss interest in transitioning from a senior individual contributor role toward architectural leadership."
           ]
         },
-        "scored_at": "2026-10-01T13:37:33.581925+00:00"
+        "scored_at": "2026-10-01T13:52:47.482411+00:00"
       },
       "generated_followup": null
     },
@@ -962,16 +1131,22 @@
       ],
       "parsed_jd": {
         "required_skills": [
-          "TypeScript",
           "React",
+          "TypeScript",
           "Next.js",
           "Node.js",
           "Python",
           "PostgreSQL",
-          "SQL"
+          "AWS",
+          "Vercel"
         ],
         "nice_to_have_skills": [
           "Startup experience"
+        ],
+        "core_skills": [
+          "TypeScript",
+          "React",
+          "Node.js"
         ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
@@ -986,26 +1161,30 @@
           "AWS"
         ],
         "languages": [
-          "English"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 3,
         "remote_policy": "Fully remote within Switzerland",
         "salary_range": "CHF 100'000 - 115'000",
         "salary_confidence": "stated",
         "key_responsibilities": [
-          "Build scheduling tools for clinics",
-          "Ship features end to end across the full stack"
+          "Ship features end to end",
+          "Work across the full stack"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Full-stack engineer role at a small startup building clinic scheduling software using a React, Node.js, and Python stack."
+        "summary": "Full-stack engineer role at a small startup building clinic scheduling tools using a React, TypeScript, Node.js, and Python stack."
       },
-      "match_score": 60,
+      "match_score": 54,
       "match_details": {
-        "rule_score": 60,
+        "rule_score": 54,
         "components": {
           "skills": {
-            "score": 13,
+            "score": 15,
             "max": 40,
             "matched_required": [
               "aws",
@@ -1013,7 +1192,16 @@
               "python",
               "typescript"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.5,
+            "core_skills": [
+              "TypeScript",
+              "React",
+              "Node.js"
+            ],
+            "matched_core": [
+              "TypeScript"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -1027,10 +1215,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 2,
@@ -1043,26 +1235,29 @@
             "policy": "Fully remote within Switzerland"
           }
         },
+        "adjustments": [
+          "Only 50% of required skills matched, so seniority, language, salary and remote count 83% (47 -> 39 points)."
+        ],
         "insights": {
-          "fit_narrative": "The candidate is a strong backend-focused engineer with relevant experience in Python and PostgreSQL, making them a solid match for the backend portion of this role. However, there is a significant gap in frontend expertise, as the candidate lacks professional experience with React, Next.js, and Node.js, which are core requirements for this full-stack position.",
+          "fit_narrative": "The candidate is a strong backend-focused engineer with relevant experience in Python, PostgreSQL, and AWS, which aligns well with the role's requirements. However, there is a significant gap in frontend expertise, as the candidate lacks professional experience with React, Next.js, and Node.js, which are core components of this full-stack position. They meet the seniority and location requirements, but will need to demonstrate a rapid ability to pick up the frontend stack.",
           "key_strengths": [
-            "6 years of professional experience exceeding the minimum requirement",
-            "Strong proficiency in Python and PostgreSQL",
-            "Experience with cloud infrastructure and CI/CD tools like AWS and Terraform",
-            "Fluent in English and based in Switzerland, meeting the remote policy requirements"
+            "Strong backend proficiency in Python and PostgreSQL",
+            "Experience with cloud infrastructure (AWS, Terraform)",
+            "Meets the remote work location requirement in Switzerland",
+            "Solid foundation in modern development workflows (Docker, GitHub Actions)"
           ],
           "gaps": [
             "Lack of professional experience with React and Next.js",
             "No documented experience with Node.js",
-            "Limited evidence of full-stack development capabilities"
+            "Limited exposure to frontend-heavy full-stack development"
           ],
           "talking_points": [
-            "Highlight your ability to quickly adapt to new frameworks, emphasizing your experience with Python-based web development as a foundation for learning the Node.js ecosystem.",
-            "Discuss your experience building robust REST APIs and how you would approach the end-to-end feature delivery required for clinic scheduling tools.",
-            "Emphasize your familiarity with the Swiss tech landscape and your ability to work effectively in a fully remote, startup-paced environment."
+            "Highlight your ability to quickly adapt to new frameworks, emphasizing your experience with TypeScript as a bridge to learning the React/Next.js ecosystem.",
+            "Discuss your experience building end-to-end features in your previous roles and how you can apply that architectural mindset to this startup's clinic scheduling tools.",
+            "Leverage your strong backend and infrastructure background to offer immediate value in the Python/AWS portions of the stack while you ramp up on the frontend."
           ]
         },
-        "scored_at": "2026-10-01T13:37:50.773926+00:00"
+        "scored_at": "2026-10-01T13:53:03.866677+00:00"
       },
       "generated_followup": null
     },
@@ -1097,11 +1292,14 @@
           "Python",
           "Go",
           "SQL",
-          "REST API design"
+          "REST API"
         ],
         "nice_to_have_skills": [
-          "PostGIS",
-          "Geospatial analysis"
+          "PostGIS"
+        ],
+        "core_skills": [
+          "Python",
+          "Go"
         ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
@@ -1115,37 +1313,53 @@
           "GCP"
         ],
         "languages": [
-          "French",
-          "English"
+          {
+            "language": "French",
+            "min_level": null,
+            "required": true
+          },
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 4,
         "remote_policy": "hybrid",
         "salary_range": "CHF 105'000 - 120'000",
         "salary_confidence": "stated",
         "key_responsibilities": [
-          "Develop and maintain fleet and rider APIs",
-          "Implement pricing logic",
-          "Develop trip billing systems",
-          "Build real-time fleet tracking features"
+          "Develop fleet and rider APIs",
+          "Work on pricing and trip billing systems",
+          "Implement real-time fleet tracking"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Backend developer role at Vireo Mobility AG in Lausanne focusing on e-bike sharing infrastructure using Python and Go."
+        "summary": "Backend developer role at Vireo Mobility AG in Lausanne focusing on e-bike sharing infrastructure using Python, Go, and GCP."
       },
-      "match_score": 55,
+      "match_score": 61,
       "match_details": {
-        "rule_score": 55,
+        "rule_score": 61,
         "components": {
           "skills": {
-            "score": 13,
+            "score": 19,
             "max": 40,
             "matched_required": [
               "fastapi",
               "postgresql",
               "python",
-              "redis"
+              "redis",
+              "sql"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.62,
+            "core_skills": [
+              "Python",
+              "Go"
+            ],
+            "matched_core": [
+              "Python"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -1159,11 +1373,19 @@
           "language": {
             "score": 8,
             "max": 15,
-            "matched": [
-              "English"
-            ],
-            "missing": [
-              "French"
+            "requirements": [
+              {
+                "language": "French",
+                "required_level": null,
+                "your_level": "missing",
+                "credit": 0.0
+              },
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
             ]
           },
           "salary": {
@@ -1177,27 +1399,27 @@
             "policy": "hybrid"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is a strong backend developer with relevant experience in Python and REST APIs, making them a solid technical match for the core responsibilities. However, they lack the required Go experience and French language proficiency, and the commute between Zurich and Lausanne is significant for a hybrid role.",
+          "fit_narrative": "The candidate is a strong backend developer with relevant experience in Python and SQL, but lacks the required Go proficiency and French language skills. While the commute between Zurich and Lausanne is feasible for a hybrid role, the candidate will need to demonstrate an ability to quickly pick up Go and adapt to the GCP environment.",
           "key_strengths": [
             "6 years of backend development experience",
-            "Strong proficiency in Python and FastAPI",
+            "Strong proficiency in Python and REST API design",
             "Experience with PostgreSQL and Redis",
-            "Familiarity with cloud infrastructure and CI/CD"
+            "Familiarity with containerization and CI/CD pipelines"
           ],
           "gaps": [
-            "Lack of professional experience with Go",
-            "No mention of French language skills, which is likely required for the Lausanne office",
-            "Geographic distance between Zurich and Lausanne makes a hybrid onsite commitment challenging",
-            "No experience with PostGIS or geospatial analysis"
+            "Missing professional experience with Go",
+            "Lack of French language proficiency, which is a requirement for the role",
+            "No documented experience with GCP or PostGIS"
           ],
           "talking_points": [
-            "Highlight your extensive experience building scalable REST APIs with Python and FastAPI as a direct foundation for the fleet and rider API requirements.",
-            "Emphasize your ability to quickly adapt to new languages, expressing a willingness to learn Go to support the company's infrastructure.",
-            "Discuss your experience with PostgreSQL and database management, noting your readiness to pick up PostGIS for the geospatial tracking features."
+            "Highlight your extensive experience building scalable REST APIs with Python and FastAPI as a foundation for the fleet and rider API requirements.",
+            "Express your willingness to transition from AWS to GCP and your commitment to learning Go to meet the core technical requirements of the team.",
+            "Discuss your experience with real-time data handling using Redis and how it can be applied to the company's fleet tracking systems."
           ]
         },
-        "scored_at": "2026-10-01T13:38:04.800590+00:00"
+        "scored_at": "2026-10-01T13:53:27.443797+00:00"
       },
       "generated_followup": null
     },
@@ -1230,6 +1452,10 @@
           "SQL"
         ],
         "nice_to_have_skills": [],
+        "core_skills": [
+          "Python",
+          "SQL"
+        ],
         "seniority_claimed": "Junior",
         "seniority_assessed": "junior",
         "tech_stack": [
@@ -1238,7 +1464,11 @@
           "SQL"
         ],
         "languages": [
-          "German"
+          {
+            "language": "German",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 0,
         "remote_policy": "On-site in St. Gallen",
@@ -1246,27 +1476,35 @@
         "salary_confidence": "stated",
         "key_responsibilities": [
           "Write Python scripts",
-          "Develop Flask services",
+          "Develop small Flask services",
           "Maintain SQL reports",
           "Assist customers with data imports"
         ],
-        "red_flags": [
-          "German required (customer contact)"
-        ],
+        "red_flags": [],
         "missing_info": [],
-        "summary": "Junior Python Developer role at Ahornweg Software GmbH focusing on ERP add-ons, requiring basic Python and SQL skills with mandatory German proficiency."
+        "summary": "Junior Python Developer role at Ahornweg Software GmbH in St. Gallen focusing on ERP add-ons, Flask services, and SQL reporting."
       },
-      "match_score": 51,
+      "match_score": 61,
       "match_details": {
-        "rule_score": 51,
+        "rule_score": 61,
         "components": {
           "skills": {
-            "score": 20,
+            "score": 30,
             "max": 40,
             "matched_required": [
-              "python"
+              "python",
+              "sql"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.67,
+            "core_skills": [
+              "Python",
+              "SQL"
+            ],
+            "matched_core": [
+              "Python",
+              "SQL"
+            ]
           },
           "seniority": {
             "score": 10,
@@ -1280,10 +1518,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "German"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "German",
+                "required_level": null,
+                "your_level": "B1",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 0,
@@ -1296,25 +1538,26 @@
             "policy": "On-site in St. Gallen"
           }
         },
+        "adjustments": [],
         "insights": {
-          "fit_narrative": "The candidate is significantly overqualified for this junior-level role, possessing six years of experience compared to the entry-level requirement. While the technical stack aligns well, the candidate's German proficiency (B1) may be insufficient for the role's requirement of direct customer contact, and the salary range is likely below the market expectation for a candidate with this level of seniority.",
+          "fit_narrative": "The candidate is significantly overqualified for this junior-level role, possessing six years of experience compared to the entry-level requirement. While the candidate meets the technical requirements for Python and SQL, the role's focus on Flask and the requirement for German language proficiency may be limiting factors, as the candidate is only at an intermediate B1 level. The commute between Zurich and St. Gallen is feasible, but the salary range is likely below the candidate's market expectations for a senior-level professional.",
           "key_strengths": [
-            "Strong proficiency in Python and SQL",
-            "Extensive experience with backend frameworks and cloud infrastructure",
-            "Professional experience exceeding the minimum requirements"
+            "Strong backend development background with Python, FastAPI, and Django",
+            "Extensive experience with database management and SQL",
+            "Proficiency in DevOps tools like Docker, AWS, and Terraform"
           ],
           "gaps": [
-            "German language proficiency is at B1, while the role requires fluent German for customer interaction",
-            "Candidate's seniority level is significantly higher than the junior role advertised",
-            "Salary expectations for a 6-year experienced developer likely exceed the stated range of CHF 75k-85k"
+            "Candidate is overqualified for a junior position",
+            "German language proficiency is at B1, while the role requires professional fluency for customer assistance",
+            "Experience is primarily in FastAPI/Django rather than the requested Flask framework"
           ],
           "talking_points": [
-            "Highlight ability to quickly adapt to the Flask framework given extensive experience with FastAPI and Django",
-            "Emphasize experience in maintaining SQL databases and reporting, which directly addresses the core responsibilities",
-            "Discuss interest in the ERP domain and willingness to operate at a junior-to-mid level scope"
+            "Highlight ability to quickly adapt to the Flask framework given extensive experience with Python web ecosystems like FastAPI and Django.",
+            "Emphasize experience in maintaining complex SQL reports and data pipelines to support the ERP add-on responsibilities.",
+            "Discuss interest in a role that allows for direct customer interaction and how current German language skills can be applied in a professional setting."
           ]
         },
-        "scored_at": "2026-10-01T13:38:27.309543+00:00"
+        "scored_at": "2026-10-01T13:53:48.854238+00:00"
       },
       "generated_followup": null
     },
@@ -1350,19 +1593,25 @@
           "Go"
         ],
         "nice_to_have_skills": [],
+        "core_skills": [
+          "Kubernetes",
+          "Terraform"
+        ],
         "seniority_claimed": null,
         "seniority_assessed": "mid",
         "tech_stack": [
           "Kubernetes",
-          "EKS",
+          "AWS EKS",
           "Terraform",
           "GitHub Actions",
-          "Python",
-          "Go",
-          "AWS"
+          "Python"
         ],
         "languages": [
-          "English"
+          {
+            "language": "English",
+            "min_level": null,
+            "required": true
+          }
         ],
         "years_experience_min": 4,
         "remote_policy": "hybrid",
@@ -1370,30 +1619,36 @@
         "salary_confidence": "stated",
         "key_responsibilities": [
           "Build internal developer platform",
-          "Manage Kubernetes EKS clusters",
-          "Maintain Terraform infrastructure",
-          "Develop GitHub Actions pipelines",
-          "Create Python tooling for service scaffolding",
-          "Manage cost and reliability dashboards"
+          "Manage service scaffolding tooling",
+          "Maintain cost and reliability dashboards"
         ],
         "red_flags": [],
         "missing_info": [],
-        "summary": "Platform Engineer role at Zinnober Media AG focusing on internal developer tooling, infrastructure automation, and cloud reliability in a hybrid Zurich-based team."
+        "summary": "Platform Engineer role at Zinnober Media AG focusing on internal developer tooling, Kubernetes, and AWS infrastructure."
       },
-      "match_score": 86,
+      "match_score": 68,
       "match_details": {
-        "rule_score": 86,
+        "rule_score": 68,
         "components": {
           "skills": {
-            "score": 27,
+            "score": 31,
             "max": 40,
             "matched_required": [
               "aws",
+              "aws eks",
               "github actions",
               "python",
               "terraform"
             ],
-            "matched_nice_to_have": []
+            "matched_nice_to_have": [],
+            "required_ratio": 0.71,
+            "core_skills": [
+              "Kubernetes",
+              "Terraform"
+            ],
+            "matched_core": [
+              "Terraform"
+            ]
           },
           "seniority": {
             "score": 20,
@@ -1407,10 +1662,14 @@
           "language": {
             "score": 15,
             "max": 15,
-            "matched": [
-              "English"
-            ],
-            "missing": []
+            "requirements": [
+              {
+                "language": "English",
+                "required_level": null,
+                "your_level": "C2",
+                "credit": 1.0
+              }
+            ]
           },
           "salary": {
             "score": 14,
@@ -1423,25 +1682,28 @@
             "policy": "hybrid"
           }
         },
+        "adjustments": [
+          "Missing core skill (Kubernetes): capped at 68 (was 90)."
+        ],
         "insights": {
-          "fit_narrative": "The candidate is a strong match for the Python and Terraform requirements, and their location in Zurich aligns perfectly with the hybrid office requirement. However, there is a notable gap in Kubernetes experience, which is a core responsibility of this role, and a lack of professional experience with Go, which is part of the required tech stack.",
+          "fit_narrative": "The candidate is a strong backend developer with relevant experience in Python, AWS, and Terraform, making them a solid contender for this Platform Engineering role. However, there is a notable gap in Kubernetes expertise, which is a core requirement for this position. The candidate's location in Zurich is a perfect match for the hybrid requirement.",
           "key_strengths": [
-            "Strong proficiency in Python and Terraform",
-            "Experience with AWS and GitHub Actions",
+            "Strong proficiency in Python and AWS",
+            "Experience with infrastructure-as-code via Terraform",
             "Local candidate based in Zurich",
-            "Meets the minimum years of experience requirement"
+            "Relevant experience level for a mid-level role"
           ],
           "gaps": [
-            "No documented experience with Kubernetes or EKS",
-            "No professional experience with Go"
+            "Lack of professional experience with Kubernetes, which is central to the role",
+            "No listed experience with Go, which is often used in platform engineering tooling"
           ],
           "talking_points": [
-            "Highlight your extensive experience building internal tooling and infrastructure automation using Python and Terraform.",
-            "Emphasize your ability to quickly learn new technologies, specifically your plan to bridge the gap in Kubernetes and Go to support the internal developer platform.",
-            "Mention your familiarity with the Zurich tech ecosystem and your ability to contribute immediately to the hybrid team environment."
+            "Highlight experience building internal tooling and automation using Python and GitHub Actions.",
+            "Emphasize a strong background in cloud infrastructure management with Terraform and AWS.",
+            "Express a willingness to rapidly upskill in Kubernetes to support the internal developer platform."
           ]
         },
-        "scored_at": "2026-10-01T13:38:45.123959+00:00"
+        "scored_at": "2026-10-01T13:54:05.640379+00:00"
       },
       "generated_followup": null
     }
