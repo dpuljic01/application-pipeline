@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.db.models.company import Company
@@ -79,3 +79,7 @@ class CompanyRepository:
 
     def delete(self, *, company: Company) -> None:
         self.db.delete(company)
+
+    def delete_all_for_user(self, *, user_id: UUID) -> None:
+        # Caller deletes the user's applications first (FK is RESTRICT).
+        self.db.execute(delete(Company).where(Company.user_id == user_id))

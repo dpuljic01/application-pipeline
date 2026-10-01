@@ -12,10 +12,12 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, loginDemo } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<"idle" | "authenticating" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "authenticating" | "demo" | "error">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
@@ -30,6 +32,20 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Sign in failed");
     }
   }
+
+  async function handleDemo() {
+    setStatus("demo");
+    setError(null);
+    try {
+      await loginDemo();
+      router.push("/");
+    } catch (err) {
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Demo is unavailable right now");
+    }
+  }
+
+  const busy = status === "authenticating" || status === "demo";
 
   return (
     <div className="relative flex min-h-screen flex-1 items-center justify-center overflow-hidden bg-background px-4">
@@ -88,11 +104,30 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            disabled={status === "authenticating"}
+            disabled={busy}
             className="mt-6 w-full"
           >
             {status === "authenticating" ? "Authenticating…" : "Sign in"}
           </Button>
+
+          <div className="mt-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={handleDemo}
+            className="mt-5 w-full"
+          >
+            {status === "demo" ? "Loading demo…" : "Try the demo"}
+          </Button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Shared sandbox with sample applications. Resets between visitors.
+          </p>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}

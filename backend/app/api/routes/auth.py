@@ -1,10 +1,17 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security.deps import require_id_token_payload
-from app.core.security.cognito_jwt import TokenPayload
+from app.core.security.cognito_jwt import TokenPayload, verify_jwt
 from app.core.security.cognito_auth import sign_in, refresh_session
+from app.db.session import get_db
+from app.services.demo_service import DemoService
+from app.services.user_service import UserService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,6 +61,37 @@ async def me(payload: TokenPayload = Depends(require_id_token_payload)) -> MeRes
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, response: Response) -> TokenResponse:
     result = await sign_in(body.username, body.password)
+    response.set_cookie(
+        REFRESH_COOKIE_NAME,
+        result["RefreshToken"],
+        max_age=REFRESH_COOKIE_MAX_AGE,
+        **_refresh_cookie_kwargs(),
+    )
+    return TokenResponse(id_token=result["IdToken"])
+
+
+@router.post("/demo", response_model=TokenResponse)
+async def demo_login(
+    response: Response, db: Session = Depends(get_db)
+) -> TokenResponse:
+    """One-click login to the shared demo account. Re-seeds its data unless
+    another visitor did so within the last 15 minutes.
+
+    Only an ID token (plus the HttpOnly refresh cookie) reaches the browser,
+    never the access token - so a visitor can't call Cognito's
+    ChangePassword/DeleteUser on the shared account.
+    """
+    if not settings.DEMO_EMAIL or not settings.DEMO_PASSWORD:
+        raise HTTPException(status_code=404, detail="Demo is not enabled")
+
+    result = await sign_in(settings.DEMO_EMAIL, settings.DEMO_PASSWORD)
+    payload = await verify_jwt(result["IdToken"])
+    user = UserService(db).get_or_create_current_user(
+        cognito_sub=UUID(payload.sub), email=payload.email
+    )
+    # ~50 inserts: small, but blocking - keep it off the event loop.
+    await run_in_threadpool(DemoService(db).reset_if_stale, user_id=user.id)
+
     response.set_cookie(
         REFRESH_COOKIE_NAME,
         result["RefreshToken"],

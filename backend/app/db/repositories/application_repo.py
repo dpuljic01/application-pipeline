@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.db.models.application import Application
 from app.domain.enums import ApplicationStage
@@ -83,3 +83,7 @@ class ApplicationRepository:
     ) -> None:
         application.stage = stage
         application.stage_changed_at = occurred_at or utcnow()
+
+    def delete_all_for_user(self, *, user_id: UUID) -> None:
+        # Bulk delete: activities go with them via the FK's ON DELETE CASCADE.
+        self.db.execute(delete(Application).where(Application.user_id == user_id))

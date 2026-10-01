@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # before every call. None disables the check.
     LLM_DAILY_BUDGET_USD: float | None = 1.0
 
+    # Shared demo account (a normal Cognito user). Both unset = the demo
+    # login endpoint is disabled. Kept server-side so the password never
+    # ships in the frontend bundle.
+    DEMO_EMAIL: str | None = None
+    DEMO_PASSWORD: str | None = None
+
     ADZUNA_APP_ID: str | None = None
     ADZUNA_APP_KEY: str | None = None
     ADZUNA_COUNTRY: str = "ch"

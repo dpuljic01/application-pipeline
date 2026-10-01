@@ -82,6 +82,22 @@ async function backendLogin(username: string, password: string): Promise<string>
   return ((await res.json()) as TokenResponse).id_token;
 }
 
+// Shared demo account: the backend holds the credentials and re-seeds the
+// demo data, so the frontend never sees a password.
+async function backendDemoLogin(): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}/auth/demo`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail ?? "Demo is unavailable right now");
+  }
+
+  return ((await res.json()) as TokenResponse).id_token;
+}
+
 // Returns null on any failure (no cookie, expired, revoked) rather than
 // throwing — callers treat "no session" as a normal, expected outcome.
 async function backendRefresh(): Promise<string | null> {
@@ -125,6 +141,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isRestoring: boolean;
   login: (username: string, password: string) => Promise<void>;
+  loginDemo: () => Promise<void>;
   logout: () => void;
 }
 
@@ -137,6 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     const token = await backendLogin(username, password);
     setIdToken(token);
+  }, []);
+
+  const loginDemo = useCallback(async () => {
+    setIdToken(await backendDemoLogin());
   }, []);
 
   const logout = useCallback(() => {
@@ -185,9 +206,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: idToken !== null,
       isRestoring,
       login,
+      loginDemo,
       logout,
     }),
-    [idToken, isRestoring, login, logout],
+    [idToken, isRestoring, login, loginDemo, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
