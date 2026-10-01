@@ -8,11 +8,15 @@ from app.db.models.profile import Profile
 from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
+from app.db.repositories.llm_cache_repo import LLMCacheRepository
 from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
 from app.domain.errors import InvalidStageDate, InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
 from app.services.followup_generator import generate_followup_email
-from app.services.jd_parser import ParsedJobDescription, parse_job_description
+from app.services.jd_parser import (
+    ParsedJobDescription,
+    parse_job_description_cached,
+)
 from app.services.matcher import score_application_match
 
 
@@ -22,6 +26,7 @@ class ApplicationService:
         self.repository = ApplicationRepository(db)
         self.activity_repository = ActivityRepository(db)
         self.company_repository = CompanyRepository(db)
+        self.llm_cache_repository = LLMCacheRepository(db)
 
     def get_application_for_user(
         self,
@@ -167,7 +172,9 @@ class ApplicationService:
             raise NotFound("Application not found")
 
         # JDParseError propagates as-is — the route maps it to an HTTP error.
-        parsed = parse_job_description(llm, jd_text=jd_text)
+        parsed = parse_job_description_cached(
+            llm, cache=self.llm_cache_repository, jd_text=jd_text
+        )
 
         self.repository.update(
             application=app,

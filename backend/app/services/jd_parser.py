@@ -1,7 +1,10 @@
+import hashlib
+import json
 from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
+from app.db.repositories.llm_cache_repo import LLMCacheRepository
 from app.domain.errors import JDParseError
 from app.integrations.llm.base import LLMProvider, LLMProviderError, LLMTimeoutError
 
@@ -83,17 +86,89 @@ them into `required_skills`.
 """
 
 
-def parse_job_description(llm: LLMProvider, *, jd_text: str) -> ParsedJobDescription:
-    try:
-        response = llm.complete(
-            system_prompt=SYSTEM_PROMPT,
-            user_prompt=jd_text,
-            response_schema=ParsedJobDescription,
-        )
-    except (LLMProviderError, LLMTimeoutError) as exc:
-        raise JDParseError(f"LLM call failed: {exc}") from exc
+# Derived from the prompt and output schema rather than a hand-bumped
+# constant: any edit to either changes the version, so a stale cached parse
+# can never be served for a prompt that would now answer differently.
+PROMPT_VERSION = hashlib.sha256(
+    (
+        SYSTEM_PROMPT
+        + json.dumps(ParsedJobDescription.model_json_schema(), sort_keys=True)
+    ).encode()
+).hexdigest()[:12]
 
+CACHE_OPERATION = "parse_jd"
+
+
+def _validate_output(response_content: str) -> tuple[ParsedJobDescription | None, str]:
+    """Returns (parsed, "") on success, (None, reason) when the output fails
+    either the schema or the one semantic check worth retrying for."""
     try:
-        return ParsedJobDescription.model_validate_json(response.content)
+        parsed = ParsedJobDescription.model_validate_json(response_content)
     except ValidationError as exc:
-        raise JDParseError(f"LLM returned invalid structured output: {exc}") from exc
+        return (
+            None,
+            f"it did not match the required schema ({exc.error_count()} errors)",
+        )
+    if not parsed.required_skills and not parsed.tech_stack:
+        return None, "it listed no required skills and no tech stack"
+    return parsed, ""
+
+
+def parse_job_description(llm: LLMProvider, *, jd_text: str) -> ParsedJobDescription:
+    """One retry on invalid output, with the rejection reason fed back to the
+    model - a malformed or empty answer is usually a one-off, and a pointed
+    second attempt is cheaper than surfacing a 502 to the user."""
+    user_prompt = jd_text
+    reason = ""
+    for attempt in range(2):
+        try:
+            response = llm.complete(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                response_schema=ParsedJobDescription,
+            )
+        except (LLMProviderError, LLMTimeoutError) as exc:
+            raise JDParseError(f"LLM call failed: {exc}") from exc
+
+        parsed, reason = _validate_output(response.content)
+        if parsed is not None:
+            return parsed
+        user_prompt = (
+            f"{jd_text}\n\n---\nYour previous answer was rejected because "
+            f"{reason}. Re-read the posting above and fill every field; "
+            "extract every skill and technology it mentions."
+        )
+
+    raise JDParseError(f"LLM returned invalid output twice: {reason}")
+
+
+def normalize_jd_text(jd_text: str) -> str:
+    # Pasted postings differ in trailing newlines and wrapping depending on
+    # where they were copied from - collapse whitespace so those still hit.
+    return " ".join(jd_text.split())
+
+
+def jd_cache_key(*, provider: str, jd_text: str) -> str:
+    raw = f"{CACHE_OPERATION}:{PROMPT_VERSION}:{provider}:{normalize_jd_text(jd_text)}"
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def parse_job_description_cached(
+    llm: LLMProvider, *, cache: LLMCacheRepository, jd_text: str
+) -> ParsedJobDescription:
+    """Same contract as parse_job_description, but a posting already parsed
+    with this prompt version and provider is served from llm_cache without
+    an LLM call. Only validated results are ever written, so a bad answer
+    can't get stuck in the cache. The caller commits."""
+    key = jd_cache_key(provider=llm.name, jd_text=jd_text)
+    cached = cache.get(cache_key=key)
+    if cached is not None:
+        return ParsedJobDescription.model_validate(cached)
+
+    parsed = parse_job_description(llm, jd_text=jd_text)
+    cache.put(
+        cache_key=key,
+        operation=CACHE_OPERATION,
+        result=parsed.model_dump(mode="json"),
+    )
+    return parsed
