@@ -4,6 +4,7 @@ import type {
   Application,
   ApplicationCreateInput,
   ApplicationUpdateInput,
+  CVExtraction,
   ParsedJobDescription,
   Profile,
   ProfileUpdateInput,
@@ -29,7 +30,8 @@ async function request<T>(
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      // FormData bodies must let the browser set the multipart boundary.
+      ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       Authorization: `Bearer ${token}`,
       ...init?.headers,
     },
@@ -148,6 +150,19 @@ export function updateProfile(
   return request<Profile>("/profile", token, {
     method: "PUT",
     body: JSON.stringify(input),
+  });
+}
+
+export function extractProfileFromCv(
+  token: string,
+  input: { file: File } | { text: string },
+): Promise<CVExtraction> {
+  const body = new FormData();
+  if ("file" in input) body.append("file", input.file);
+  else body.append("text", input.text);
+  return request<CVExtraction>("/profile/extract-from-cv", token, {
+    method: "POST",
+    body,
   });
 }
 

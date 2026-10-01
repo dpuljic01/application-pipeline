@@ -61,7 +61,20 @@ class ParsedJobDescription(BaseModel):
     summary: str = Field(description="One-sentence summary of the role")
 
 
-SYSTEM_PROMPT = """\
+# Shared with services/cv_extractor.py. The matcher compares skills by exact
+# (lowercased) string, so a CV saying "Postgres" and a posting saying
+# "PostgreSQL" would otherwise never match - both extractions are told to
+# emit the same canonical names.
+SKILL_NAMING_RULES = """\
+Skill names: use the most common canonical name for each skill, one skill
+per entry - e.g. "PostgreSQL" not "Postgres"/"psql", "Kubernetes" not "k8s",
+"JavaScript" not "JS", "AWS" for Amazon Web Services in general but keep
+specific services separate ("AWS Lambda"). No versions ("Python", not
+"Python 3.11"), no proficiency words ("Docker", not "Docker (advanced)").
+"""
+
+SYSTEM_PROMPT = (
+    """\
 You are an expert technical recruiter analyzing job postings for the Swiss/DACH
 market. Extract structured data from the job description below.
 
@@ -83,7 +96,10 @@ trial periods, and requirements mismatched with the stated seniority.
 
 `languages` lists only spoken/written language requirements — do not duplicate
 them into `required_skills`.
+
 """
+    + SKILL_NAMING_RULES
+)
 
 
 # Derived from the prompt and output schema rather than a hand-bumped

@@ -188,3 +188,12 @@ export interface ProfileUpdateInput {
   ideal_salary_chf?: number | null;
   home_location?: string | null;
 }
+
+// Mirrors CVExtraction in backend/app/services/cv_extractor.py - a
+// suggestion only, never saved by the backend.
+export interface CVExtraction {
+  skills: string[];
+  years_experience: number | null;
+  languages: LanguageEntry[];
+  seniority: Seniority | null;
+}

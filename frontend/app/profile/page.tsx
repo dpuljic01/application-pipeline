@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getProfile, updateProfile, ApiError } from "@/lib/api";
-import type { LanguageEntry, Profile, Seniority } from "@/lib/types";
+import type { CVExtraction, LanguageEntry, Profile, Seniority } from "@/lib/types";
 import { AppHeader } from "@/components/app-header";
 import { LoadingScreen } from "@/components/loading-screen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TagInput } from "@/components/ui/tag-input";
+import { CvImport } from "@/components/cv-import";
 
 const SENIORITY_OPTIONS: { value: Seniority; label: string }[] = [
   { value: "junior", label: "Junior" },
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
 
   const [yearsExperience, setYearsExperience] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
@@ -98,6 +100,48 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idToken, isAuthenticated, isRestoring]);
+
+  // Merge, never replace: the CV adds to what's already on the profile, and
+  // an existing value always wins over the CV's suggestion for the same
+  // field (the user may have corrected it on purpose).
+  function applyCvExtraction(cv: CVExtraction) {
+    const knownSkills = new Set(skills.map((s) => s.trim().toLowerCase()));
+    const newSkills = cv.skills.filter((s) => !knownSkills.has(s.trim().toLowerCase()));
+    setSkills([...skills, ...newSkills]);
+
+    const knownLanguages = new Set(
+      languages.map((l) => l.language.trim().toLowerCase()),
+    );
+    const newLanguages = cv.languages.filter(
+      (l) => !knownLanguages.has(l.language.trim().toLowerCase()),
+    );
+    setLanguages([...languages, ...newLanguages]);
+
+    const parts: string[] = [];
+    let note = "";
+    if (newSkills.length) parts.push(`${newSkills.length} skills`);
+    if (newLanguages.length) parts.push(`${newLanguages.length} languages`);
+
+    if (cv.years_experience !== null) {
+      if (!yearsExperience) {
+        setYearsExperience(cv.years_experience.toString());
+        parts.push("years of experience");
+      } else if (Number(yearsExperience) !== cv.years_experience) {
+        note = ` Your CV suggests ${cv.years_experience} years of experience; kept your ${yearsExperience}.`;
+      }
+    }
+    if (cv.seniority && targetSeniorities.length === 0) {
+      setTargetSeniorities([cv.seniority]);
+      parts.push("target seniority");
+    }
+
+    setSaved(false);
+    setImportSummary(
+      (parts.length
+        ? `Added from your CV: ${parts.join(", ")}. Review below, then save.`
+        : "Nothing new found in the CV - your profile already covers it.") + note,
+    );
+  }
 
   function toggleSeniority(value: Seniority) {
     setTargetSeniorities((prev) =>
@@ -158,6 +202,7 @@ export default function ProfilePage() {
       });
       applyProfile(updated);
       setSaved(true);
+      setImportSummary(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         handleUnauthorized();
@@ -202,6 +247,23 @@ export default function ProfilePage() {
               </p>
             </CardHeader>
             <CardContent>
+              {idToken && (
+                <CvImport
+                  idToken={idToken}
+                  onExtracted={applyCvExtraction}
+                  onUnauthorized={handleUnauthorized}
+                />
+              )}
+
+              {importSummary && (
+                <p
+                  className="mb-4 rounded-[3px] border border-[var(--primary)]/40 bg-[var(--primary)]/10 px-3 py-2 text-xs text-[var(--primary)]"
+                  role="status"
+                >
+                  {importSummary}
+                </p>
+              )}
+
               {isIncomplete && (
                 <p className="mb-4 rounded-[3px] border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
                   Complete your profile for more accurate match scores.

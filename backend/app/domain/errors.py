@@ -40,3 +40,11 @@ class FollowUpGenerationError(DomainError):
 
 class LLMBudgetExceeded(DomainError):
     pass
+
+
+class InvalidCV(DomainError):
+    pass
+
+
+class CVExtractionError(DomainError):
+    pass
