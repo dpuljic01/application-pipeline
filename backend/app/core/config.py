@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     LLM_MODEL: str | None = None
     GEMINI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
-    CEREBRAS_API_KEY: str | None = None
     # Global (all users) daily LLM spend cap, checked against llm_usage
     # before every call. None disables the check.
     LLM_DAILY_BUDGET_USD: float | None = 1.0

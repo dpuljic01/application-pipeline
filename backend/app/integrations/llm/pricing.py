@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 # USD per 1M tokens (input, output). Verified against provider pricing pages
-# 2026-09-01 (gemini/anthropic) and 2026-09-11 (cerebras). Update when a new
+# 2026-09-01. Update when a new
 # default model is picked in config.py.
 PRICING: dict[tuple[str, str], tuple[Decimal, Decimal]] = {
     # TODO: promotional rate expires 2027-01-01, then $1.50 / $7.50.
@@ -12,10 +12,6 @@ PRICING: dict[tuple[str, str], tuple[Decimal, Decimal]] = {
     # gemini_provider.py.
     ("gemini", "gemini-3.1-flash-lite"): (Decimal("0.25"), Decimal("1.50")),
     ("anthropic", "claude-haiku-4-5-20251001"): (Decimal("1.00"), Decimal("5.00")),
-    # Free while under the account's free-tier daily/rate quota — cost_tracker
-    # still records this rate so a call that spills over into paid usage
-    # (quota exceeded, or a non-free Cerebras account) is logged accurately.
-    ("cerebras", "gpt-oss-120b"): (Decimal("0.35"), Decimal("0.75")),
 }
 
 # Anthropic prompt-caching multipliers on the base input price, 5-minute TTL

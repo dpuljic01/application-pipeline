@@ -65,7 +65,6 @@ class PipelineStatus(str, Enum):
 class LLMProviderName(str, Enum):
     GEMINI = "gemini"
     ANTHROPIC = "anthropic"
-    CEREBRAS = "cerebras"
 
 
 class CompanySize(str, Enum):

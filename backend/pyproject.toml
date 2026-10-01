@@ -16,7 +16,6 @@ dependencies = [
     "pydantic[email] (>=2.12.5,<3.0.0)",
     "google-genai (>=2.21.0,<3.0.0)",
     "anthropic (>=1.2.0,<2.0.0)",
-    "cerebras-cloud-sdk (>=1.91.0,<2.0.0)",
 ]
 
 [tool.uv]

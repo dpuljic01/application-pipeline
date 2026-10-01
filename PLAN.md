@@ -528,7 +528,7 @@ Never expose ORM models directly in the API. `ApplicationRead` uses `model_confi
 | API | FastAPI, Pydantic, sync + async Python |
 | Domain | Pure Python, state machines |
 | Data | PostgreSQL, SQLAlchemy, Alembic |
-| AI | Provider-agnostic LLM layer (Gemini 3.6 Flash default with 3.1 Flash-Lite rate-limit fallback, Claude Haiku 4.5 and Cerebras as swap-ins), structured extraction, cost tracking + daily budget, JD-parse caching, background parse → score pipeline |
+| AI | Provider-agnostic LLM layer (Gemini 3.6 Flash default with 3.1 Flash-Lite rate-limit fallback, Claude Haiku 4.5 as swap-in), structured extraction, cost tracking + daily budget, JD-parse caching, background parse → score pipeline |
 | Auth | AWS Cognito, OAuth2, JWT verification |
 | Infra | Terraform (VPC, RDS, ECS Fargate, ALB — on-demand demo stack; S3 planned); live on Render + Neon Postgres + Vercel |
 | CI/CD | GitHub Actions (lint + test), Render auto-deploy with migrations on container start; ECR → ECS deploy planned (Day 16) |

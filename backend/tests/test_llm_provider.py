@@ -8,7 +8,6 @@ from google.genai import errors as genai_errors
 
 from app.integrations.llm.anthropic_provider import AnthropicProvider
 from app.integrations.llm.base import DisabledLLMProvider, LLMProviderError
-from app.integrations.llm.cerebras_provider import CerebrasProvider
 from app.integrations.llm.factory import get_llm_provider
 from app.integrations.llm.gemini_provider import (
     DEFAULT_MODEL,
@@ -96,27 +95,6 @@ def test_factory_returns_anthropic_provider_when_configured(monkeypatch):
     monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "test-key")
 
     assert isinstance(get_llm_provider(), AnthropicProvider)
-
-
-def test_factory_returns_cerebras_provider_when_configured(monkeypatch):
-    from app.core.config import settings
-
-    monkeypatch.setattr(settings, "LLM_ENABLED", True)
-    monkeypatch.setattr(settings, "LLM_PROVIDER", "cerebras")
-    monkeypatch.setattr(settings, "CEREBRAS_API_KEY", "test-key")
-
-    assert isinstance(get_llm_provider(), CerebrasProvider)
-
-
-def test_calculate_cost_cerebras_known_model():
-    cost = calculate_cost(
-        provider="cerebras",
-        model="gpt-oss-120b",
-        prompt_tokens=1_000_000,
-        completion_tokens=1_000_000,
-    )
-
-    assert cost == Decimal("0.35") + Decimal("0.75")
 
 
 def test_factory_raises_when_api_key_missing(monkeypatch):
