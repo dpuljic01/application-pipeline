@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -22,7 +23,9 @@ class CostTracker:
         self.db = db
         self.repository = LLMUsageRepository(db)
 
-    def record_success(self, *, response: LLMResponse, operation: str) -> None:
+    def record_success(
+        self, *, response: LLMResponse, operation: str, user_id: UUID | None = None
+    ) -> None:
         if response.provider == "disabled":
             return
 
@@ -30,6 +33,7 @@ class CostTracker:
             provider=LLMProviderName(response.provider),
             model=response.model,
             operation=operation,
+            user_id=user_id,
             prompt_tokens=response.prompt_tokens,
             completion_tokens=response.completion_tokens,
             total_tokens=response.total_tokens,
@@ -47,11 +51,13 @@ class CostTracker:
         operation: str,
         latency_ms: int,
         error_message: str,
+        user_id: UUID | None = None,
     ) -> None:
         self.repository.create(
             provider=provider,
             model=model,
             operation=operation,
+            user_id=user_id,
             prompt_tokens=0,
             completion_tokens=0,
             total_tokens=0,

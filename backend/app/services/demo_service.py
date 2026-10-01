@@ -16,11 +16,13 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.db.mixins import utcnow
 from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
 from app.db.repositories.profile_repo import ProfileRepository
+from app.db.repositories.user_repo import UserRepository
 from app.domain.enums import ActivityType, ApplicationStage, PipelineStatus
 
 SEED_PATH = Path(__file__).with_name("demo_seed.json")
@@ -32,6 +34,21 @@ SEED_PATH = Path(__file__).with_name("demo_seed.json")
 RESET_COOLDOWN = timedelta(minutes=15)
 _last_reset: datetime | None = None
 _lock = threading.Lock()
+
+
+def is_demo_email(email: str | None) -> bool:
+    return bool(
+        email and settings.DEMO_EMAIL and email.lower() == settings.DEMO_EMAIL.lower()
+    )
+
+
+def user_daily_llm_budget(db: Session, *, user_id: UUID) -> float | None:
+    """Per-user LLM cap for this user, or None for no cap beyond the global
+    one. Only the shared demo account has one."""
+    user = UserRepository(db).get(user_id=user_id)
+    if user is not None and is_demo_email(user.email):
+        return settings.LLM_DEMO_DAILY_BUDGET_USD
+    return None
 
 
 @cache

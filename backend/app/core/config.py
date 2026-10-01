@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     # ships in the frontend bundle.
     DEMO_EMAIL: str | None = None
     DEMO_PASSWORD: str | None = None
+    # The demo account's own daily LLM cap (USD), on top of the global one.
+    LLM_DEMO_DAILY_BUDGET_USD: float = 0.25
 
     ADZUNA_APP_ID: str | None = None
     ADZUNA_APP_KEY: str | None = None

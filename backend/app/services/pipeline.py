@@ -31,17 +31,22 @@ from app.integrations.llm.base import LLMProvider, LLMProviderError
 from app.integrations.llm.factory import get_llm_provider
 from app.integrations.llm.tracked import TrackedLLMProvider
 from app.services.application_service import ApplicationService
+from app.services.demo_service import user_daily_llm_budget
 from app.services.profile_service import ProfileService
 
 logger = logging.getLogger(__name__)
 
 
-def _tracked(llm: LLMProvider, *, db: Session, operation: str) -> LLMProvider:
+def _tracked(
+    llm: LLMProvider, *, db: Session, operation: str, user_id: UUID
+) -> LLMProvider:
     return TrackedLLMProvider(
         llm,
         db=db,
         operation=operation,
         daily_budget_usd=settings.LLM_DAILY_BUDGET_USD,
+        user_id=user_id,
+        user_daily_budget_usd=user_daily_llm_budget(db, user_id=user_id),
     )
 
 
@@ -67,7 +72,7 @@ def process_new_application(
         service.parse_jd(
             user_id=user_id,
             application_id=application_id,
-            llm=_tracked(llm, db=db, operation="parse_jd"),
+            llm=_tracked(llm, db=db, operation="parse_jd", user_id=user_id),
             jd_text=jd_text,
         )
     except NotFound:
@@ -81,7 +86,7 @@ def process_new_application(
         service.score_application(
             user_id=user_id,
             application_id=application_id,
-            llm=_tracked(llm, db=db, operation="match_insights"),
+            llm=_tracked(llm, db=db, operation="match_insights", user_id=user_id),
             profile=profile,
         )
     except NotFound:

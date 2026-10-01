@@ -127,3 +127,23 @@ def test_budget_exhausted_fails_the_pipeline_cleanly(client, db_session, monkeyp
     final = _get(client, created["id"])
     assert final["pipeline_status"] == "FAILED"
     assert "budget" in final["pipeline_error"].lower()
+
+
+def test_demo_cap_fails_the_pipeline_with_the_demo_message(
+    client, db_session, test_user, monkeypatch
+):
+    monkeypatch.setattr(settings, "DEMO_EMAIL", test_user.email)
+    monkeypatch.setattr(settings, "LLM_DEMO_DAILY_BUDGET_USD", 0.0)
+    llm = FakeLLMProvider(
+        responses={
+            "ParsedJobDescription": PARSED_JD_JSON,
+            "MatchInsights": MATCH_INSIGHTS_JSON,
+        }
+    )
+    _use_pipeline(client, db_session, llm)
+
+    created = _create(client, jd_text=_jd())
+
+    final = _get(client, created["id"])
+    assert final["pipeline_status"] == "FAILED"
+    assert "sign up" in final["pipeline_error"]

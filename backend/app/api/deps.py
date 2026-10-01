@@ -4,6 +4,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.security.deps import CurrentUser, get_current_user
 from app.db.session import get_db
 from app.integrations.llm.base import LLMProvider
 from app.integrations.llm.factory import get_llm_provider as _get_llm_provider
@@ -11,6 +12,7 @@ from app.integrations.llm.tracked import TrackedLLMProvider
 from app.services.application_service import ApplicationService
 from app.services.activity_service import ActivityService
 from app.services.company_service import CompanyService
+from app.services.demo_service import user_daily_llm_budget
 from app.services.pipeline import run_pipeline_in_background
 from app.services.profile_service import ProfileService
 
@@ -30,12 +32,17 @@ def tracked_llm(operation: str) -> Callable[..., LLMProvider]:
     def dependency(
         db: Session = Depends(get_db),
         llm: LLMProvider = Depends(get_llm_provider),
+        current_user: CurrentUser = Depends(get_current_user),
     ) -> LLMProvider:
         return TrackedLLMProvider(
             llm,
             db=db,
             operation=operation,
             daily_budget_usd=settings.LLM_DAILY_BUDGET_USD,
+            user_id=current_user.user_id,
+            user_daily_budget_usd=user_daily_llm_budget(
+                db, user_id=current_user.user_id
+            ),
         )
 
     return dependency

@@ -35,6 +35,8 @@ services:
         value: gemini
       - key: LLM_DAILY_BUDGET_USD
         value: "1.0"
+      - key: LLM_DEMO_DAILY_BUDGET_USD
+        value: "0.25"
       - key: GEMINI_API_KEY
         sync: false
       - key: DEMO_EMAIL

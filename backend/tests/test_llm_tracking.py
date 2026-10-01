@@ -2,12 +2,14 @@
 a real LLM route (generate-followup) so the dependency wiring is covered."""
 
 import json
+import uuid
 from decimal import Decimal
 
 from sqlalchemy import select
 
 from app.api.deps import get_llm_provider
 from app.core.config import settings
+from app.db.models import User
 from app.db.models.llm_usage import LLMUsage
 from app.db.repositories.llm_usage_repo import LLMUsageRepository
 from app.domain.enums import LLMProviderName
@@ -137,6 +139,78 @@ def test_under_budget_calls_go_through(client, db_session, monkeypatch):
     application = _create_application(client)
     spent = LLMUsageRepository(db_session).total_cost_since(since=_start_of_utc_day())
     monkeypatch.setattr(settings, "LLM_DAILY_BUDGET_USD", float(spent) + 1.0)
+    provider = RecordingProvider()
+    client.app.dependency_overrides[get_llm_provider] = lambda: provider
+
+    response = client.post(
+        f"/api/applications/{application['id']}/generate-followup", json={}
+    )
+
+    assert response.status_code == 200, response.text
+    assert provider.calls == 1
+
+
+# --- per-user demo budget --------------------------------------------------
+
+
+def _log_spend(db_session, *, user_id, cost: str) -> None:
+    LLMUsageRepository(db_session).create(
+        provider=LLMProviderName.GEMINI,
+        model="gemini-test",
+        operation="parse_jd",
+        user_id=user_id,
+        prompt_tokens=0,
+        completion_tokens=0,
+        total_tokens=0,
+        cost_usd=Decimal(cost),
+        latency_ms=0,
+        success=True,
+    )
+    db_session.flush()
+
+
+def test_usage_rows_record_the_calling_user(client, db_session, test_user):
+    application = _create_application(client)
+    client.app.dependency_overrides[get_llm_provider] = lambda: RecordingProvider()
+
+    client.post(f"/api/applications/{application['id']}/generate-followup", json={})
+
+    rows = _usage_rows(db_session, "generate_followup")
+    assert [r.user_id for r in rows] == [test_user.id]
+
+
+def test_demo_account_has_its_own_cap(client, db_session, test_user, monkeypatch):
+    # The test client's user *is* the demo account here.
+    monkeypatch.setattr(settings, "DEMO_EMAIL", test_user.email.upper())
+    monkeypatch.setattr(settings, "LLM_DEMO_DAILY_BUDGET_USD", 0.25)
+    _log_spend(db_session, user_id=test_user.id, cost="0.25")
+    application = _create_application(client)
+    provider = RecordingProvider()
+    client.app.dependency_overrides[get_llm_provider] = lambda: provider
+
+    response = client.post(
+        f"/api/applications/{application['id']}/generate-followup", json={}
+    )
+
+    assert response.status_code == 503
+    assert "sign up" in response.json()["detail"]
+    assert provider.calls == 0
+
+
+def test_demo_spend_does_not_count_against_other_users_cap(
+    client, db_session, test_user, monkeypatch
+):
+    # Someone else is the demo account and has blown through its cap; the
+    # global budget still has room, so this (non-demo) user is unaffected.
+    demo = User(cognito_sub=uuid.uuid4(), email="demo@example.com")
+    db_session.add(demo)
+    db_session.flush()
+    monkeypatch.setattr(settings, "DEMO_EMAIL", "demo@example.com")
+    monkeypatch.setattr(settings, "LLM_DEMO_DAILY_BUDGET_USD", 0.25)
+    spent = LLMUsageRepository(db_session).total_cost_since(since=_start_of_utc_day())
+    monkeypatch.setattr(settings, "LLM_DAILY_BUDGET_USD", float(spent) + 1.0)
+    _log_spend(db_session, user_id=demo.id, cost="0.50")
+    application = _create_application(client)
     provider = RecordingProvider()
     client.app.dependency_overrides[get_llm_provider] = lambda: provider
 
