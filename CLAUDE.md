@@ -125,7 +125,7 @@ Catch and re-raise as `HTTPException` in the route layer — never let domain er
 ### FastAPI Routes
 
 - Route functions return the ORM object with an honest type annotation (`-> Application`). FastAPI serializes it through `response_model`. Both annotations are always required.
-- Use `def` (sync) for routes that only touch the database. Use `async def` only when the route calls an `async` dependency (e.g., Cognito JWT verification). Do not mix arbitrarily.
+- Any route whose body does blocking work - an LLM call, PDF parsing, or anything else slow and synchronous - must be plain `def`, so FastAPI runs it in its threadpool. Inside `async def`, blocking code stalls the event loop and every other request on the instance. An `async` dependency (e.g. `get_current_user`'s Cognito JWT verification) does **not** require `async def`; FastAPI resolves it on the loop either way. Use `async def` only when the route body itself `await`s something. (Most DB-only routes are still `async def` from before this rule; their queries block for milliseconds, so convert them opportunistically rather than as a sweep.)
 - Map domain exceptions to `HTTPException` in the route layer. Never let `NotFound`, `InvalidTransition`, or other domain errors reach FastAPI's default exception handler.
 
 ### Auth

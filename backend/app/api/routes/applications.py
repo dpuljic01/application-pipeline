@@ -131,8 +131,13 @@ async def delete_application(
         raise HTTPException(status_code=404, detail="Application not found")
 
 
+# The three LLM routes below are plain `def`: the LLM call blocks for
+# seconds, and inside `async def` it would stall the event loop - every
+# other request on this instance - for the whole call. As `def`, FastAPI
+# runs them in its threadpool. (The async get_current_user dependency still
+# works; FastAPI resolves it on the loop either way.)
 @router.post("/{application_id}/parse-jd", response_model=ParsedJobDescription)
-async def parse_jd(
+def parse_jd(
     application_id: UUID,
     payload: ParseJDRequest,
     current_user: CurrentUser = Depends(get_current_user),
@@ -155,7 +160,7 @@ async def parse_jd(
 
 
 @router.post("/{application_id}/score", response_model=ApplicationRead)
-async def score_application(
+def score_application(
     application_id: UUID,
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
@@ -183,7 +188,7 @@ async def score_application(
 
 
 @router.post("/{application_id}/generate-followup", response_model=ApplicationRead)
-async def generate_followup(
+def generate_followup(
     application_id: UUID,
     payload: GenerateFollowUpRequest,
     current_user: CurrentUser = Depends(get_current_user),
