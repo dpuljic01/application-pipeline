@@ -52,6 +52,16 @@ class ActivityType(str, Enum):
     STAGE_CHANGE = "STAGE_CHANGE"
 
 
+class PipelineStatus(str, Enum):
+    """State of the automatic parse -> score run started on application
+    creation. COMPLETED/FAILED are terminal; FAILED keeps whatever earlier
+    steps already saved (e.g. parsed_jd survives a scoring failure)."""
+
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class LLMProviderName(str, Enum):
     GEMINI = "gemini"
     ANTHROPIC = "anthropic"

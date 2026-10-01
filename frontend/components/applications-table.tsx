@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,6 +26,7 @@ import { DeleteApplicationDialog } from "@/components/delete-application-dialog"
 import { ApplicationCard } from "@/components/application-card";
 import { scoreColor } from "@/lib/jd-score";
 import { needsFollowUp } from "@/lib/followup";
+import { isPipelineRunning } from "@/lib/pipeline";
 import type { Application } from "@/lib/types";
 import type { SortDirection, SortField } from "@/app/page";
 
@@ -178,6 +180,11 @@ export function ApplicationsTable({
                   <span style={{ color: scoreColor(application.match_score) }}>
                     {application.match_score}
                   </span>
+                ) : isPipelineRunning(application) ? (
+                  <Loader2
+                    className="size-3.5 animate-spin text-muted-foreground"
+                    aria-label="Scoring…"
+                  />
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}

@@ -1,7 +1,14 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from collections.abc import Callable
 
-from app.api.deps import get_application_service, get_profile_service, tracked_llm
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+
+from app.api.deps import (
+    get_application_service,
+    get_pipeline_runner,
+    get_profile_service,
+    tracked_llm,
+)
 from app.api.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
@@ -33,11 +40,14 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 @router.post("", response_model=ApplicationRead)
 async def create_application(
     payload: ApplicationCreate,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser = Depends(get_current_user),
     service: ApplicationService = Depends(get_application_service),
+    pipeline_runner: Callable[..., None] = Depends(get_pipeline_runner),
 ) -> Application:
+    jd_text = (payload.jd_text or "").strip()
     try:
-        return service.create_application(
+        application = service.create_application(
             user_id=current_user.user_id,
             company=payload.company,
             role_title=payload.role_title,
@@ -45,9 +55,19 @@ async def create_application(
             location=payload.location,
             salary_range=payload.salary_range,
             company_id=payload.company_id,
+            pipeline_pending=bool(jd_text),
         )
     except NotFound:
         raise HTTPException(status_code=404, detail="Company not found")
+
+    if jd_text:
+        background_tasks.add_task(
+            pipeline_runner,
+            user_id=current_user.user_id,
+            application_id=application.id,
+            jd_text=jd_text,
+        )
+    return application
 
 
 @router.get("/{application_id}", response_model=ApplicationRead)

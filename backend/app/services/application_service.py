@@ -9,7 +9,12 @@ from app.db.repositories.activity_repo import ActivityRepository
 from app.db.repositories.application_repo import ApplicationRepository
 from app.db.repositories.company_repo import CompanyRepository
 from app.db.repositories.llm_cache_repo import LLMCacheRepository
-from app.domain.enums import ALLOWED_TRANSITIONS, ActivityType, ApplicationStage
+from app.domain.enums import (
+    ALLOWED_TRANSITIONS,
+    ActivityType,
+    ApplicationStage,
+    PipelineStatus,
+)
 from app.domain.errors import InvalidStageDate, InvalidTransition, JDNotParsed, NotFound
 from app.integrations.llm.base import LLMProvider
 from app.services.followup_generator import generate_followup_email
@@ -59,6 +64,7 @@ class ApplicationService:
         location: str | None = None,
         salary_range: str | None = None,
         company_id: UUID | None = None,
+        pipeline_pending: bool = False,
     ):
         # Either an explicit company_id (validated to belong to this user),
         # or auto-create/link by name so a second application for the same
@@ -84,10 +90,40 @@ class ApplicationService:
             location=location,
             salary_range=salary_range,
         )
+        if pipeline_pending:
+            # Set before the response goes out, so the client's first read
+            # already shows the background run as in progress.
+            self.repository.update(
+                application=app, data={"pipeline_status": PipelineStatus.PENDING}
+            )
 
         self.db.commit()
         self.db.refresh(app)
         return app
+
+    def set_pipeline_status(
+        self,
+        *,
+        user_id: UUID,
+        application_id: UUID,
+        status: PipelineStatus,
+        error: str | None = None,
+    ) -> None:
+        app = self.repository.get_for_user(
+            user_id=user_id,
+            application_id=application_id,
+        )
+        if not app:
+            # Deleted while the pipeline was running - nothing to record.
+            return
+        self.repository.update(
+            application=app,
+            data={
+                "pipeline_status": status,
+                "pipeline_error": error[:500] if error else None,
+            },
+        )
+        self.db.commit()
 
     @staticmethod
     def _validate_stage_date(*, app: Application, occurred_at: datetime) -> None:

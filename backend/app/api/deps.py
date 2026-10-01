@@ -11,6 +11,7 @@ from app.integrations.llm.tracked import TrackedLLMProvider
 from app.services.application_service import ApplicationService
 from app.services.activity_service import ActivityService
 from app.services.company_service import CompanyService
+from app.services.pipeline import run_pipeline_in_background
 from app.services.profile_service import ProfileService
 
 
@@ -38,6 +39,12 @@ def tracked_llm(operation: str) -> Callable[..., LLMProvider]:
         )
 
     return dependency
+
+
+def get_pipeline_runner() -> Callable[..., None]:
+    # A dependency (not a direct import in the route) so tests can swap in a
+    # runner that uses the test's transactional session and a fake LLM.
+    return run_pipeline_in_background
 
 
 def get_application_service(

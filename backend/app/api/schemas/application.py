@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, AnyHttpUrl, Field, ConfigDict
 
-from app.domain.enums import ApplicationStage
+from app.domain.enums import ApplicationStage, PipelineStatus
 from app.services.followup_generator import FollowUpEmail
 from app.services.jd_parser import ParsedJobDescription
 from app.services.matcher import MatchDetails
@@ -18,6 +18,10 @@ class ApplicationCreate(BaseModel):
     # service auto-creates/links one by matching `company` (case-insensitive)
     # against the user's existing companies.
     company_id: UUID | None = None
+    # Optional: the posting text. When given, parsing + match scoring run in
+    # the background after the application is created (see
+    # services/pipeline.py); poll pipeline_status for progress.
+    jd_text: str | None = Field(default=None, max_length=50_000)
 
 
 class StageChangeRequest(BaseModel):
@@ -58,3 +62,5 @@ class ApplicationRead(BaseModel):
     match_score: int | None
     match_details: MatchDetails | None
     generated_followup: FollowUpEmail | None
+    pipeline_status: PipelineStatus | None
+    pipeline_error: str | None

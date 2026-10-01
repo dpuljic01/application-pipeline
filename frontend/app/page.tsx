@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { listApplications, ApiError } from "@/lib/api";
+import { isPipelineRunning, usePolling } from "@/lib/pipeline";
 import { APPLICATION_STAGES } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { ApplicationsTable } from "@/components/applications-table";
@@ -105,6 +106,13 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idToken, isAuthenticated, isRestoring]);
+
+  // Newly added applications with a JD get parsed + scored in the
+  // background - refresh the list until their match scores land.
+  usePolling(applications.some(isPipelineRunning), async () => {
+    if (!idToken) return;
+    setApplications(await listApplications(idToken));
+  });
 
   const filtered = useMemo(() => {
     const matches = applications.filter((app) => {

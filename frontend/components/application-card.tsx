@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { StageBadge } from "@/components/stage-badge";
 import { FollowUpBadge } from "@/components/follow-up-badge";
 import { scoreColor } from "@/lib/jd-score";
 import { needsFollowUp } from "@/lib/followup";
+import { isPipelineRunning } from "@/lib/pipeline";
 import type { Application } from "@/lib/types";
 
 // Mobile equivalent of a table row: minimal on purpose — company, role,
@@ -26,6 +28,12 @@ export function ApplicationCard({ application }: { application: Application }) {
           >
             {application.match_score}
           </span>
+        )}
+        {application.match_score === null && isPipelineRunning(application) && (
+          <Loader2
+            className="size-3.5 animate-spin text-muted-foreground"
+            aria-label="Scoring…"
+          />
         )}
         <StageBadge stage={application.stage} />
         {needsFollowUp(application) && <FollowUpBadge />}

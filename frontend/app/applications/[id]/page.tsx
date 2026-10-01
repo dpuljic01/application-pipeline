@@ -15,6 +15,8 @@ import { AddActivityDialog } from "@/components/add-activity-dialog";
 import { JdParsePanel } from "@/components/jd-parse-panel";
 import { MatchScorePanel } from "@/components/match-score-panel";
 import { FollowUpPanel } from "@/components/follow-up-panel";
+import { PipelineStatusBanner } from "@/components/pipeline-status-banner";
+import { isPipelineRunning, usePolling } from "@/lib/pipeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Activity, Application, ParsedJobDescription } from "@/lib/types";
 
@@ -63,6 +65,11 @@ export default function ApplicationDetailPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idToken, isAuthenticated, isRestoring, params.id]);
+
+  usePolling(application !== null && isPipelineRunning(application), async () => {
+    if (!idToken) return;
+    setApplication(await getApplication(idToken, params.id));
+  });
 
   function handleChanged(updated: Application) {
     setApplication(updated);
@@ -181,6 +188,10 @@ export default function ApplicationDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="mt-6 empty:hidden">
+              <PipelineStatusBanner application={application} />
+            </div>
 
             {idToken && (
               <div className="mt-6">

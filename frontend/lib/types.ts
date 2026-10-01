@@ -92,7 +92,12 @@ export interface Application {
   match_score: number | null;
   match_details: MatchDetails | null;
   generated_followup: FollowUpEmail | null;
+  pipeline_status: PipelineStatus | null;
+  pipeline_error: string | null;
 }
+
+// Mirrors PipelineStatus in backend/app/domain/enums.py
+export type PipelineStatus = "PENDING" | "COMPLETED" | "FAILED";
 
 export interface ApplicationCreateInput {
   company: string;
@@ -100,6 +105,8 @@ export interface ApplicationCreateInput {
   job_url?: string | null;
   location?: string | null;
   salary_range?: string | null;
+  // When present, the backend parses + scores it in the background.
+  jd_text?: string | null;
 }
 
 export interface ApplicationUpdateInput {

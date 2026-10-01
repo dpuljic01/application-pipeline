@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import UUIDPrimaryKeyMixin, TimestampMixin
-from app.domain.enums import ApplicationStage
+from app.domain.enums import ApplicationStage, PipelineStatus
 
 
 class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -61,6 +61,13 @@ class Application(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Same "one cached LLM artifact per feature" pattern as parsed_jd/
     # match_details, not a separate audit-trail table.
     generated_followup: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    # Day 12: automatic parse -> score run, started when an application is
+    # created with JD text. Null means it was never started (no JD given).
+    pipeline_status: Mapped[PipelineStatus | None] = mapped_column(
+        Enum(PipelineStatus, name="pipeline_status"), nullable=True
+    )
+    pipeline_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     user = relationship("User", back_populates="applications")
     # Named `linked_company`, not `company` — that name is already the

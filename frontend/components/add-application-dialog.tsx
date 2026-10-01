@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createApplication, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Application } from "@/lib/types";
@@ -33,6 +34,7 @@ export function AddApplicationDialog({
   const [jobUrl, setJobUrl] = useState("");
   const [location, setLocation] = useState("");
   const [salaryRange, setSalaryRange] = useState("");
+  const [jdText, setJdText] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +44,7 @@ export function AddApplicationDialog({
     setJobUrl("");
     setLocation("");
     setSalaryRange("");
+    setJdText("");
     setError(null);
   }
 
@@ -57,6 +60,7 @@ export function AddApplicationDialog({
         job_url: jobUrl || null,
         location: location || null,
         salary_range: salaryRange || null,
+        jd_text: jdText.trim() || null,
       });
       onCreated(application);
       setOpen(false);
@@ -142,6 +146,20 @@ export function AddApplicationDialog({
                   onChange={(e) => setSalaryRange(e.target.value)}
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="jd_text" className="text-xs text-muted-foreground">
+                Job description <span className="text-muted-foreground/70">(optional)</span>
+              </Label>
+              <Textarea
+                id="jd_text"
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                placeholder="Paste the posting to have it analyzed and scored automatically…"
+                rows={4}
+                maxLength={50000}
+                className="max-h-48"
+              />
             </div>
           </div>
 
