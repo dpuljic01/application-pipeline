@@ -139,6 +139,34 @@ def test_gemini_falls_back_to_flash_lite_on_rate_limit(monkeypatch):
     assert response.content == "ok"
 
 
+def test_gemini_falls_back_to_flash_lite_when_overloaded(monkeypatch):
+    provider = GeminiProvider(api_key="test-key")
+    calls: list[str] = []
+
+    def fake_generate_content(*, model, contents, config):
+        calls.append(model)
+        if model == DEFAULT_MODEL:
+            raise genai_errors.APIError(
+                503,
+                {
+                    "error": {
+                        "message": "This model is currently experiencing high demand.",
+                        "status": "UNAVAILABLE",
+                    }
+                },
+            )
+        return _FakeResponse()
+
+    monkeypatch.setattr(
+        provider._client.models, "generate_content", fake_generate_content
+    )
+
+    response = provider.complete(system_prompt="sys", user_prompt="hi")
+
+    assert calls == [DEFAULT_MODEL, FALLBACK_MODEL]
+    assert response.model == FALLBACK_MODEL
+
+
 def test_gemini_does_not_fall_back_for_non_rate_limit_error(monkeypatch):
     provider = GeminiProvider(api_key="test-key")
 

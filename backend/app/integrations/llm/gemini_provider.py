@@ -13,9 +13,14 @@ from app.integrations.llm.pricing import calculate_cost
 DEFAULT_MODEL = "gemini-3.6-flash"
 # Free tier is ~20 requests/day on 3.6 Flash vs. ~500 on 3.1 Flash-Lite (same
 # API key, no separate provider needed) - used only when the primary model
-# is rate-limited, never for an explicitly-requested model.
+# is rate-limited or overloaded, never for an explicitly-requested model.
 FALLBACK_MODEL = "gemini-3.1-flash-lite"
 PROVIDER_NAME = "gemini"
+# Codes that mean "this model can't serve you right now" rather than "this
+# request is bad": 429 = quota exhausted, 503 = model overloaded ("high
+# demand"). The SDK already retries both with backoff; these only reach us
+# once those retries are spent, and Flash-Lite has separate capacity/quota.
+FALLBACK_STATUS_CODES = frozenset({429, 503})
 
 
 class GeminiProvider:
@@ -84,7 +89,7 @@ class GeminiProvider:
                 resolved_model = candidate_model
                 break
             except genai_errors.APIError as exc:
-                if exc.code == 429 and not is_last_candidate:
+                if exc.code in FALLBACK_STATUS_CODES and not is_last_candidate:
                     continue
                 raise LLMProviderError(
                     f"Gemini API error ({exc.code}): {exc.message}"
