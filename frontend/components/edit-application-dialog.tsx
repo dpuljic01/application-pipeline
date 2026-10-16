@@ -73,7 +73,7 @@ export function EditApplicationDialog({
       // Only send the stage date when the user actually changed it, so an
       // unrelated edit can't overwrite it with a stale value.
       if (stageDate && stageDate !== initialStageDate) {
-        input.stage_changed_at = fromDateInputValue(stageDate, application.created_at);
+        input.stage_changed_at = fromDateInputValue(stageDate);
       }
       const updated = await updateApplication(idToken, application.id, input);
       onUpdated(updated);
@@ -167,7 +167,6 @@ export function EditApplicationDialog({
                   id="edit_stage_date"
                   type="date"
                   required
-                  min={toDateInputValue(application.created_at)}
                   max={todayDateInputValue()}
                   value={stageDate}
                   onChange={(e) => setStageDate(e.target.value)}

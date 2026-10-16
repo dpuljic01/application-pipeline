@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from app.core.security.deps import CurrentUser, get_current_user
-from app.db.models.application import Application
 from app.domain.enums import ApplicationStage
 
 
@@ -137,15 +136,8 @@ def test_stage_change_on_unknown_application_returns_404(client):
     assert response.status_code == 404
 
 
-def test_stage_transition_can_be_backdated(client, db_session):
+def test_stage_transition_can_be_backdated(client):
     created = _create_application(client)
-    # Push created_at into the past so a 5-day backdate is legal - a freshly
-    # created row's created_at is ~now, which would otherwise make any
-    # backdate look like it precedes the application's own creation.
-    app = db_session.get(Application, uuid.UUID(created["id"]))
-    app.created_at = datetime.now(timezone.utc) - timedelta(days=10)
-    db_session.flush()
-
     occurred_at = datetime.now(timezone.utc) - timedelta(days=5)
 
     response = client.patch(
@@ -163,9 +155,11 @@ def test_stage_transition_can_be_backdated(client, db_session):
     assert datetime.fromisoformat(body["last_activity_at"]) == occurred_at
 
 
-def test_stage_transition_backdated_before_creation_returns_422(client):
+def test_stage_transition_can_predate_creation(client):
+    # Applications are often logged after the fact, so a stage date before
+    # the row's created_at is legitimate.
     created = _create_application(client)
-    occurred_at = datetime.now(timezone.utc) - timedelta(days=3650)
+    occurred_at = datetime.now(timezone.utc) - timedelta(days=12)
 
     response = client.patch(
         f"/api/applications/{created['id']}/stage",
@@ -174,7 +168,8 @@ def test_stage_transition_backdated_before_creation_returns_422(client):
             "occurred_at": occurred_at.isoformat(),
         },
     )
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert datetime.fromisoformat(response.json()["stage_changed_at"]) == occurred_at
 
 
 def test_stage_transition_backdated_in_future_returns_422(client):
@@ -220,32 +215,8 @@ def test_user_cannot_see_another_users_application(client):
     assert response.status_code == 404
 
 
-def test_stage_transition_on_creation_day_is_allowed(client, db_session):
-    # Saved and applied on the same day: the frontend clamps the picked
-    # date to created_at, which must be accepted (boundary, not before).
-    # Send it the way a browser does - truncated to milliseconds, which is
-    # slightly *before* the microsecond-precision created_at.
+def test_put_can_correct_stage_date(client):
     created = _create_application(client)
-    created_at = datetime.fromisoformat(created["created_at"])
-    as_js_date = created_at.replace(
-        microsecond=created_at.microsecond // 1000 * 1000
-    ).isoformat(timespec="milliseconds")
-
-    response = client.patch(
-        f"/api/applications/{created['id']}/stage",
-        json={
-            "stage": ApplicationStage.APPLIED.value,
-            "occurred_at": as_js_date,
-        },
-    )
-    assert response.status_code == 200
-
-
-def test_put_can_correct_stage_date(client, db_session):
-    created = _create_application(client)
-    app = db_session.get(Application, uuid.UUID(created["id"]))
-    app.created_at = datetime.now(timezone.utc) - timedelta(days=10)
-    db_session.flush()
     client.patch(
         f"/api/applications/{created['id']}/stage",
         json={"stage": ApplicationStage.APPLIED.value},
@@ -263,19 +234,19 @@ def test_put_can_correct_stage_date(client, db_session):
     assert datetime.fromisoformat(body["last_activity_at"]) == corrected
 
 
-def test_put_stage_date_before_creation_returns_422(client):
+def test_put_stage_date_can_predate_creation(client):
+    # The case that motivated dropping the floor: an application entered on
+    # the 16th whose first interview was on the 4th.
     created = _create_application(client)
     client.patch(
         f"/api/applications/{created['id']}/stage",
         json={"stage": ApplicationStage.APPLIED.value},
     )
 
+    corrected = datetime.now(timezone.utc) - timedelta(days=12)
     response = client.put(
         f"/api/applications/{created['id']}",
-        json={
-            "stage_changed_at": (
-                datetime.now(timezone.utc) - timedelta(days=3650)
-            ).isoformat()
-        },
+        json={"stage_changed_at": corrected.isoformat()},
     )
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert datetime.fromisoformat(response.json()["stage_changed_at"]) == corrected

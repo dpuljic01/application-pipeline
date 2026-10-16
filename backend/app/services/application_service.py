@@ -126,19 +126,12 @@ class ApplicationService:
         self.db.commit()
 
     @staticmethod
-    def _validate_stage_date(*, app: Application, occurred_at: datetime) -> None:
+    def _validate_stage_date(*, occurred_at: datetime) -> None:
+        # No lower bound: created_at is when the row was entered into the
+        # tracker, not when the application happened - users often log an
+        # application (or an interview) days after the fact.
         if occurred_at > utcnow():
             raise InvalidStageDate("Stage date cannot be in the future")
-        # Compare at millisecond precision: created_at has microseconds, but
-        # a browser Date only has milliseconds, so a client clamping to
-        # created_at sends a value up to 999us *before* it.
-        created_ms = app.created_at.replace(
-            microsecond=app.created_at.microsecond // 1000 * 1000
-        )
-        if occurred_at < created_ms:
-            raise InvalidStageDate(
-                "Stage date cannot be before the application was created"
-            )
 
     def update_application(
         self,
@@ -158,7 +151,7 @@ class ApplicationService:
             new_stage_date = data["stage_changed_at"]
             if new_stage_date is None:
                 raise InvalidStageDate("Stage date cannot be cleared")
-            self._validate_stage_date(app=app, occurred_at=new_stage_date)
+            self._validate_stage_date(occurred_at=new_stage_date)
             # If the stage change was the latest activity, move
             # last_activity_at with it so the follow-up badge reflects the
             # corrected date.
@@ -311,7 +304,7 @@ class ApplicationService:
             raise InvalidTransition(f"Cannot transition from {app.stage} to {stage}")
 
         if occurred_at is not None:
-            self._validate_stage_date(app=app, occurred_at=occurred_at)
+            self._validate_stage_date(occurred_at=occurred_at)
         else:
             # One timestamp for stage_changed_at and the activity, so
             # update_application can tell whether the stage change is still

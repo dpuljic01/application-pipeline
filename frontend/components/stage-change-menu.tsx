@@ -24,7 +24,7 @@ import { ALLOWED_TRANSITIONS } from "@/lib/types";
 import type { Application, ApplicationStage } from "@/lib/types";
 import { changeApplicationStage, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { fromDateInputValue, toDateInputValue, todayDateInputValue } from "@/lib/stage-date";
+import { fromDateInputValue, todayDateInputValue } from "@/lib/stage-date";
 
 export function StageChangeMenu({
   application,
@@ -60,7 +60,7 @@ export function StageChangeMenu({
     try {
       const updated = await changeApplicationStage(idToken, application.id, {
         stage: pendingStage,
-        occurred_at: fromDateInputValue(occurredDate, application.created_at),
+        occurred_at: fromDateInputValue(occurredDate),
       });
       onChanged(updated);
       setDialogOpen(false);
@@ -127,7 +127,6 @@ export function StageChangeMenu({
                 id="stage_occurred_date"
                 type="date"
                 required
-                min={toDateInputValue(application.created_at)}
                 max={todayDateInputValue()}
                 value={occurredDate}
                 onChange={(e) => setOccurredDate(e.target.value)}
