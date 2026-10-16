@@ -73,6 +73,14 @@ export default function ApplicationDetailPage() {
 
   function handleChanged(updated: Application) {
     setApplication(updated);
+    // Stage changes and stage-date corrections write to the timeline
+    // server-side, so reload it rather than mirroring that logic here.
+    if (!idToken) return;
+    listActivities(idToken, params.id)
+      .then(setActivities)
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) handleUnauthorized();
+      });
   }
 
   function handleActivityAdded(activity: Activity) {

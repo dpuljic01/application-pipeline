@@ -160,6 +160,15 @@ class ApplicationService:
                 and app.last_activity_at == app.stage_changed_at
             ):
                 app.last_activity_at = new_stage_date
+            # Keep the timeline's STAGE_CHANGE entry in step with the
+            # corrected date, or the two would disagree.
+            stage_change = self.activity_repository.get_latest_stage_change(
+                application_id=app.id
+            )
+            if stage_change is not None:
+                self.activity_repository.update_occurred_at(
+                    activity=stage_change, occurred_at=new_stage_date
+                )
 
         self.repository.update(
             application=app,

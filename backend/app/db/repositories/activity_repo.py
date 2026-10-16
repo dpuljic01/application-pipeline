@@ -20,6 +20,24 @@ class ActivityRepository:
         )
         return self.db.scalars(stmt).all()
 
+    def get_latest_stage_change(self, *, application_id: UUID) -> Activity | None:
+        # Newest by insert time, not occurred_at: the last transition made is
+        # the one that set the current stage, even if it was backdated to
+        # before an earlier one.
+        stmt = (
+            select(Activity)
+            .where(
+                Activity.application_id == application_id,
+                Activity.activity_type == ActivityType.STAGE_CHANGE,
+            )
+            .order_by(Activity.created_at.desc())
+            .limit(1)
+        )
+        return self.db.scalars(stmt).first()
+
+    def update_occurred_at(self, *, activity: Activity, occurred_at: datetime) -> None:
+        activity.occurred_at = occurred_at
+
     def create(
         self,
         *,

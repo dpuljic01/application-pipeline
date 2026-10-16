@@ -233,6 +233,44 @@ def test_put_can_correct_stage_date(client):
     # The stage change was the latest activity, so it moves too.
     assert datetime.fromisoformat(body["last_activity_at"]) == corrected
 
+    # And so does the timeline entry for that stage change.
+    activities = client.get(f"/api/applications/{created['id']}/activities").json()
+    stage_changes = [a for a in activities if a["activity_type"] == "STAGE_CHANGE"]
+    assert len(stage_changes) == 1
+    assert datetime.fromisoformat(stage_changes[0]["occurred_at"]) == corrected
+
+
+def test_put_stage_date_moves_only_the_latest_stage_change(client):
+    created = _create_application(client)
+    applied_at = datetime.now(timezone.utc) - timedelta(days=10)
+    client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={
+            "stage": ApplicationStage.APPLIED.value,
+            "occurred_at": applied_at.isoformat(),
+        },
+    )
+    client.patch(
+        f"/api/applications/{created['id']}/stage",
+        json={"stage": ApplicationStage.INTERVIEW.value},
+    )
+
+    corrected = datetime.now(timezone.utc) - timedelta(days=3)
+    response = client.put(
+        f"/api/applications/{created['id']}",
+        json={"stage_changed_at": corrected.isoformat()},
+    )
+    assert response.status_code == 200
+
+    activities = client.get(f"/api/applications/{created['id']}/activities").json()
+    by_note = {
+        a["note"]: datetime.fromisoformat(a["occurred_at"])
+        for a in activities
+        if a["activity_type"] == "STAGE_CHANGE"
+    }
+    assert by_note["APPLIED -> INTERVIEW"] == corrected
+    assert by_note["SAVED -> APPLIED"] == applied_at
+
 
 def test_put_stage_date_can_predate_creation(client):
     # The case that motivated dropping the floor: an application entered on
